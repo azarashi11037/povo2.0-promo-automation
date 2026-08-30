@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create an encrypted povo session through the authorized email OTP flow."""
+"""Create an encrypted povo2.0 session through the authorized email OTP flow."""
 
 from __future__ import annotations
 

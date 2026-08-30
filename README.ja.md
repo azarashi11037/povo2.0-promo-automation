@@ -1,17 +1,17 @@
-# povo promo automation（実験的）
+# povo2.0 promo automation（実験的）
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | 日本語 | [English](README.en.md)
 
-povo の promo code を指定時刻に処理するための、非公式かつセルフホスト型のツールです。GitHub Actions でメール OTP ログイン、セッションの暗号化保存、スケジュール実行を行えるほか、LAN 管理画面付きの Docker サービスとしても利用できます。
+povo2.0 の promo code を指定時刻に処理するための、非公式かつセルフホスト型のツールです。GitHub Actions でメール OTP ログイン、セッションの暗号化保存、スケジュール実行を行えるほか、LAN 管理画面付きの Docker サービスとしても利用できます。
 
 > [!WARNING]
-> 本プロジェクトは非公開 API を使用しており、povo/KDDI によるサポートまたは承認を受けていません。API はアプリ更新により変更される可能性があります。自分が管理権限を持つアカウントだけを使用し、適用される規約を自分で確認してください。OTP、TLS 検証、Root 制限、アクセス制御を回避する機能はありません。
+> 本プロジェクトは非公開 API を使用しており、povo2.0/KDDI によるサポートまたは承認を受けていません。API はアプリ更新により変更される可能性があります。自分が管理権限を持つアカウントだけを使用し、適用される規約を自分で確認してください。OTP、TLS 検証、Root 制限、アクセス制御を回避する機能はありません。
 
 ## 利用者が入力するもの
 
 推奨する GitHub Actions モードでは、次の情報だけを使用します。
 
-1. povo のログイン用メールアドレス
+1. povo2.0 のログイン用メールアドレス
 2. 最新メールに記載された 6 桁の OTP
 3. 再利用可能な promo code
 4. 次回実行日時
@@ -36,17 +36,17 @@ povo の promo code を指定時刻に処理するための、非公式かつセ
 2. **Settings → Actions → General → Workflow permissions** で、Actions にリポジトリへの読み書きを許可します。
 3. **Settings → Secrets and variables → Actions** で次を作成します。
    - `POVO_BUNDLE_KEY`：20 文字以上。ランダム生成を推奨します。
-   - `POVO_LOGIN_EMAIL`：自分の povo ログイン用メールアドレス。
-4. **Start povo email login** を実行し、OTP メールを待ちます。
+   - `POVO_LOGIN_EMAIL`：自分の povo2.0 ログイン用メールアドレス。
+4. **Start povo2.0 email login** を実行し、OTP メールを待ちます。
 5. メール到着後、すぐに次を作成します。
    - `POVO_LOGIN_OTP`：最新メールの 6 桁 OTP。
    - `POVO_PROMO_CODE`：promo code。
-6. 15 分以内に **Finish povo email login** を実行し、タイムゾーン付きの次回日時（例：`2026-09-06T16:17:00+09:00`）を入力します。
+6. 15 分以内に **Finish povo2.0 email login** を実行し、タイムゾーン付きの次回日時（例：`2026-09-06T16:17:00+09:00`）を入力します。
 7. `state/session.enc` が作成されたことを確認し、`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除します。`POVO_BUNDLE_KEY` は残します。
 
-初期化直後に 1 回だけ有効化する場合は、**povo session keeper** を手動実行し、`redeem_now` を明示的にオンにします。この設定はその手動実行だけに適用され、定期実行が `next_due_at` を無視することはありません。
+初期化直後に 1 回だけ有効化する場合は、**povo2.0 session keeper** を手動実行し、`redeem_now` を明示的にオンにします。この設定はその手動実行だけに適用され、定期実行が `next_due_at` を無視することはありません。
 
-以後、**povo session keeper** が 1 日 4 回確認します。GitHub cron は遅延することがあり、秒単位の正確な実行は保証できません。Web 画面での詳しい操作、GitHub CLI、復旧、キーのローテーションは [GitHub Actions ガイド](docs/GITHUB_ACTIONS.ja.md) を参照してください。
+以後、**povo2.0 session keeper** が 1 日 4 回確認します。GitHub cron は遅延することがあり、秒単位の正確な実行は保証できません。Web 画面での詳しい操作、GitHub CLI、復旧、キーのローテーションは [GitHub Actions ガイド](docs/GITHUB_ACTIONS.ja.md) を参照してください。
 
 ## Docker セルフホスト
 

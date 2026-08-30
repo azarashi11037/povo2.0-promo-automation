@@ -18,9 +18,9 @@
 Repository Secret を二つ作成します。
 
 - `POVO_BUNDLE_KEY`：20 文字以上。ランダムな 32 バイト値を推奨し、長期保存します。
-- `POVO_LOGIN_EMAIL`：自分の povo ログイン用メールアドレス。
+- `POVO_LOGIN_EMAIL`：自分の povo2.0 ログイン用メールアドレス。
 
-**Actions → Start povo email login → Run workflow** を実行します。成功すると OTP メールが届き、暗号化された `state/login.enc` が作成されます。
+**Actions → Start povo2.0 email login → Run workflow** を実行します。成功すると OTP メールが届き、暗号化された `state/login.enc` が作成されます。
 
 ### 2. ログインを完了する
 
@@ -29,7 +29,7 @@ Repository Secret を二つ作成します。
 - `POVO_LOGIN_OTP`：6 桁 OTP。
 - `POVO_PROMO_CODE`：スケジュール実行する promo code。
 
-**Actions → Finish povo email login → Run workflow** を開き、タイムゾーン付きの次回実行日時を入力します。
+**Actions → Finish povo2.0 email login → Run workflow** を開き、タイムゾーン付きの次回実行日時を入力します。
 
 ```text
 2026-09-06T16:17:00+09:00
@@ -39,7 +39,7 @@ OTP チャレンジは 15 分間だけ有効です。Start を再実行した場
 
 成功すると `state/login.enc` が `state/session.enc` に置き換わります。`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除し、`POVO_BUNDLE_KEY` だけを残します。
 
-初期化したアカウントで直ちに 1 回だけ交換する場合は、**povo session keeper** を手動実行し、`redeem_now` を明示的にオンにしてください。これは 1 回限りの確認スイッチで、定期実行時は常にオフです。交換成功後、次回時刻は成功時刻の 7 日 1 分後に設定されます。
+初期化したアカウントで直ちに 1 回だけ交換する場合は、**povo2.0 session keeper** を手動実行し、`redeem_now` を明示的にオンにしてください。これは 1 回限りの確認スイッチで、定期実行時は常にオフです。交換成功後、次回時刻は成功時刻の 7 日 1 分後に設定されます。
 
 ## GitHub CLI
 
@@ -70,7 +70,7 @@ gh secret delete POVO_PROMO_CODE
 
 ## 自動実行
 
-**povo session keeper** は既定で日本時間 `10:17`、`16:17`、`22:17`、翌日 `04:17` に確認します。`next_due_at` を過ぎた場合だけ最大 1 回送信し、更新したセッションを再暗号化します。
+**povo2.0 session keeper** は既定で日本時間 `10:17`、`16:17`、`22:17`、翌日 `04:17` に確認します。`next_due_at` を過ぎた場合だけ最大 1 回送信し、更新したセッションを再暗号化します。
 
 GitHub cron は遅延する場合があります。理論上の確認間隔は最大約 6 時間です。結果を確認できない場合は `unknown` へ移行し、自動再試行を停止します。
 
@@ -84,7 +84,7 @@ GitHub cron は遅延する場合があります。理論上の確認間隔は�
 
 ## 代替インポートと復旧
 
-メール API が変更された場合は **Import encrypted povo session** で、既存の正当な Android セッションを取り込めます。`POVO_CREDENTIALS_B64`、`POVO_DEVICE_B64`、`POVO_PROMO_CODE` を一時的に設定し、成功後に削除します。
+メール API が変更された場合は **Import encrypted povo2.0 session** で、既存の正当な Android セッションを取り込めます。`POVO_CREDENTIALS_B64`、`POVO_DEVICE_B64`、`POVO_PROMO_CODE` を一時的に設定し、成功後に削除します。
 
 - OTP が無効：最後に Start を実行した後の最新メールか確認します。
 - `state/login.enc` が期限切れ：Start を一度だけ再実行します。

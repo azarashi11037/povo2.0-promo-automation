@@ -1,4 +1,4 @@
-name: Import encrypted povo session
+name: Import encrypted povo2.0 session
 
 on:
   workflow_dispatch:
@@ -54,6 +54,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --force state/session.enc
           if ! git diff --cached --quiet; then
-            git commit -m "Update encrypted povo session state"
+            git commit -m "Update encrypted povo2.0 session state"
             git push
           fi

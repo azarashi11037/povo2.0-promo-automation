@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Persistent povo session keeper and single-submit redemption scheduler."""
+"""Persistent povo2.0 session keeper and single-submit redemption scheduler."""
 
 from __future__ import annotations
 
@@ -366,7 +366,7 @@ def main() -> int:
     recover_interrupted_submission()
 
     append_history("worker_started")
-    log("povo worker started.")
+    log("povo2.0 worker started.")
     next_auth_retry = 0
     while running:
         try:
@@ -402,7 +402,7 @@ def main() -> int:
 
     save_runtime({"worker_running": False, "worker_stopped_at": iso()})
     append_history("worker_stopped")
-    log("povo worker stopped.")
+    log("povo2.0 worker stopped.")
     return 0
 
 

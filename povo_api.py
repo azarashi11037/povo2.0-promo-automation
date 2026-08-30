@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Minimal povo API client reconstructed from the Android application.
+"""Minimal povo2.0 API client reconstructed from the Android application.
 
 Secrets remain encrypted at rest in the copied Android SharedPreferences files.
 The default command is read-only inspection; redemption requires an explicit flag.
@@ -136,7 +136,7 @@ def _jwt_claims(token: str) -> dict[str, Any]:
 
 
 def _stored_session(device_id: str, token: str, migration_enabled: bool) -> str:
-    """Encode a JWT exactly as povo's encrypted SharedPreferences session value."""
+    """Encode a JWT exactly as povo2.0's encrypted SharedPreferences session value."""
     parts = token.split(".")
     if len(parts) != 3:
         raise ValueError("session is not a three-part JWT")

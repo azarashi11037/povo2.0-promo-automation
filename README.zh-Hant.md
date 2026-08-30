@@ -1,17 +1,17 @@
-# povo promo automation（實驗性）
+# povo2.0 promo automation（實驗性）
 
 [简体中文](README.md) | 繁體中文 | [日本語](README.ja.md) | [English](README.en.md)
 
-一個非官方、自行託管的 povo promo code 定時執行器。它可透過 GitHub Actions 完成電子郵件驗證碼登入、加密保存工作階段並依排程執行，也可部署成附有區域網路管理面板的 Docker 服務。
+一個非官方、自行託管的 povo2.0 promo code 定時執行器。它可透過 GitHub Actions 完成電子郵件驗證碼登入、加密保存工作階段並依排程執行，也可部署成附有區域網路管理面板的 Docker 服務。
 
 > [!WARNING]
-> 本專案使用未公開、可能隨 povo App 更新而改變的介面，不受 povo/KDDI 支援或認可。請只操作本人有權管理的帳戶，並自行確認適用條款。本專案不繞過驗證碼、TLS 驗證、Root 限制或存取控制。
+> 本專案使用未公開、可能隨 povo2.0 App 更新而改變的介面，不受 povo2.0/KDDI 支援或認可。請只操作本人有權管理的帳戶，並自行確認適用條款。本專案不繞過驗證碼、TLS 驗證、Root 限制或存取控制。
 
 ## 使用者需要提供什麼
 
 GitHub Actions 推薦模式只需要使用者提供：
 
-1. povo 登入電子郵件；
+1. povo2.0 登入電子郵件；
 2. 郵件中最新的 6 位驗證碼；
 3. 可重複使用的 promo code；
 4. 下一次執行時間。
@@ -36,17 +36,17 @@ GitHub Actions 推薦模式只需要使用者提供：
 2. 到 **Settings → Actions → General → Workflow permissions**，允許 Actions 讀寫倉庫內容。
 3. 到 **Settings → Secrets and variables → Actions** 建立：
    - `POVO_BUNDLE_KEY`：至少 20 個字元，建議隨機產生；
-   - `POVO_LOGIN_EMAIL`：本人的 povo 登入電子郵件。
-4. 執行 **Start povo email login**，等待驗證碼郵件。
+   - `POVO_LOGIN_EMAIL`：本人的 povo2.0 登入電子郵件。
+4. 執行 **Start povo2.0 email login**，等待驗證碼郵件。
 5. 立即建立：
    - `POVO_LOGIN_OTP`：最新郵件中的 6 位驗證碼；
    - `POVO_PROMO_CODE`：promo code。
-6. 在 15 分鐘內執行 **Finish povo email login**，輸入含時區的下一次執行時間，例如 `2026-09-06T16:17:00+09:00`。
+6. 在 15 分鐘內執行 **Finish povo2.0 email login**，輸入含時區的下一次執行時間，例如 `2026-09-06T16:17:00+09:00`。
 7. 確認倉庫出現 `state/session.enc` 後，刪除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 與 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
-若初始化後需要立即啟用一次，可手動執行 **povo session keeper** 並明確勾選 `redeem_now`。此開關只對本次手動執行有效；排程執行不會繞過 `next_due_at`。
+若初始化後需要立即啟用一次，可手動執行 **povo2.0 session keeper** 並明確勾選 `redeem_now`。此開關只對本次手動執行有效；排程執行不會繞過 `next_due_at`。
 
-之後 **povo session keeper** 每天檢查四次。GitHub cron 可能延遲，無法保證秒級準時。完整網頁操作、GitHub CLI 指令、復原與金鑰輪替方式請參閱 [GitHub Actions 使用說明](docs/GITHUB_ACTIONS.zh-Hant.md)。
+之後 **povo2.0 session keeper** 每天檢查四次。GitHub cron 可能延遲，無法保證秒級準時。完整網頁操作、GitHub CLI 指令、復原與金鑰輪替方式請參閱 [GitHub Actions 使用說明](docs/GITHUB_ACTIONS.zh-Hant.md)。
 
 ## Docker 自行託管
 

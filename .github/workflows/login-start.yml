@@ -1,4 +1,4 @@
-name: Start povo email login
+name: Start povo2.0 email login
 
 on:
   workflow_dispatch:
@@ -31,5 +31,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --force state/login.enc
-          git commit -m "Store encrypted povo login challenge"
+          git commit -m "Store encrypted povo2.0 login challenge"
           git push

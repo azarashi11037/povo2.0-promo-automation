@@ -18,9 +18,9 @@ This mode is suitable for a public fork. The repository stores only authenticate
 Create two repository secrets:
 
 - `POVO_BUNDLE_KEY`: at least 20 characters; a random 32-byte value is recommended and should be retained.
-- `POVO_LOGIN_EMAIL`: your povo login email address.
+- `POVO_LOGIN_EMAIL`: your povo2.0 login email address.
 
-Run **Actions → Start povo email login → Run workflow**. A successful run sends the email and commits encrypted `state/login.enc`.
+Run **Actions → Start povo2.0 email login → Run workflow**. A successful run sends the email and commits encrypted `state/login.enc`.
 
 ### 2. Finish login
 
@@ -29,7 +29,7 @@ Use only the newest email and immediately create:
 - `POVO_LOGIN_OTP`: the six-digit OTP.
 - `POVO_PROMO_CODE`: the promo code to use on schedule.
 
-Run **Actions → Finish povo email login → Run workflow** and enter the next execution time with a timezone:
+Run **Actions → Finish povo2.0 email login → Run workflow** and enter the next execution time with a timezone:
 
 ```text
 2026-09-06T16:17:00+09:00
@@ -39,7 +39,7 @@ The OTP challenge is valid for 15 minutes. If Start is run again, the old email 
 
 On success, `state/login.enc` is replaced by `state/session.enc`. Delete `POVO_LOGIN_EMAIL`, `POVO_LOGIN_OTP`, and `POVO_PROMO_CODE`; keep only `POVO_BUNDLE_KEY`.
 
-If the initialized account must redeem once immediately, manually run **povo session keeper** and explicitly enable `redeem_now`. This is a one-run confirmation switch and is always off for scheduled triggers. After a confirmed success, the next due time is set to 7 days and 1 minute after that success.
+If the initialized account must redeem once immediately, manually run **povo2.0 session keeper** and explicitly enable `redeem_now`. This is a one-run confirmation switch and is always off for scheduled triggers. After a confirmed success, the next due time is set to 7 days and 1 minute after that success.
 
 ## GitHub CLI
 
@@ -72,7 +72,7 @@ Use `gh run list` and `gh run watch` to inspect run status. Logs should contain 
 
 ## Scheduled operation
 
-By default, **povo session keeper** checks at `01:17`, `07:17`, `13:17`, and `19:17` UTC, corresponding to `10:17`, `16:17`, `22:17`, and `04:17` the next day in Japan. Each run:
+By default, **povo2.0 session keeper** checks at `01:17`, `07:17`, `13:17`, and `19:17` UTC, corresponding to `10:17`, `16:17`, `22:17`, and `04:17` the next day in Japan. Each run:
 
 1. decrypts the session inside an ephemeral runner;
 2. refreshes the session;
@@ -92,7 +92,7 @@ The encryption key is derived from `POVO_BUNDLE_KEY` using scrypt with random sa
 
 ## Fallback import and recovery
 
-If the email API changes, **Import encrypted povo session** can import an existing authorized Android session. Temporarily set `POVO_CREDENTIALS_B64`, `POVO_DEVICE_B64`, and `POVO_PROMO_CODE`, then delete them after success.
+If the email API changes, **Import encrypted povo2.0 session** can import an existing authorized Android session. Temporarily set `POVO_CREDENTIALS_B64`, `POVO_DEVICE_B64`, and `POVO_PROMO_CODE`, then delete them after success.
 
 - Invalid OTP: confirm it came from the newest email after the last Start run.
 - Expired `state/login.enc`: run Start once again; the old OTP is invalid.

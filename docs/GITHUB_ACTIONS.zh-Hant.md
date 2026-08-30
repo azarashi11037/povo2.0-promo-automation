@@ -18,9 +18,9 @@ GitHub Actions 模式適合公開 Fork。倉庫只保存經驗證加密的 `stat
 建立兩個 Repository Secret：
 
 - `POVO_BUNDLE_KEY`：至少 20 個字元；建議使用隨機 32 位元組值並長期保留。
-- `POVO_LOGIN_EMAIL`：本人 povo 帳戶的登入電子郵件。
+- `POVO_LOGIN_EMAIL`：本人 povo2.0 帳戶的登入電子郵件。
 
-進入 **Actions → Start povo email login → Run workflow**。成功後會收到郵件，倉庫中會出現加密的 `state/login.enc`。
+進入 **Actions → Start povo2.0 email login → Run workflow**。成功後會收到郵件，倉庫中會出現加密的 `state/login.enc`。
 
 ### 第二步：完成登入
 
@@ -29,7 +29,7 @@ GitHub Actions 模式適合公開 Fork。倉庫只保存經驗證加密的 `stat
 - `POVO_LOGIN_OTP`：6 位驗證碼。
 - `POVO_PROMO_CODE`：要依排程使用的 promo code。
 
-進入 **Actions → Finish povo email login → Run workflow**，輸入含時區的下一次執行時間，例如：
+進入 **Actions → Finish povo2.0 email login → Run workflow**，輸入含時區的下一次執行時間，例如：
 
 ```text
 2026-09-06T16:17:00+09:00
@@ -39,7 +39,7 @@ GitHub Actions 模式適合公開 Fork。倉庫只保存經驗證加密的 `stat
 
 成功後，`state/login.enc` 會由 `state/session.enc` 取代。刪除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 與 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
-若初始化帳戶還需要立即兌換一次，請手動執行 **povo session keeper** 並明確勾選 `redeem_now`。這是單次確認開關；排程觸發時永遠關閉。確認兌換成功後，下一次時間會設為成功時刻加 7 天 1 分鐘。
+若初始化帳戶還需要立即兌換一次，請手動執行 **povo2.0 session keeper** 並明確勾選 `redeem_now`。這是單次確認開關；排程觸發時永遠關閉。確認兌換成功後，下一次時間會設為成功時刻加 7 天 1 分鐘。
 
 ## GitHub CLI 方式
 
@@ -70,7 +70,7 @@ gh secret delete POVO_PROMO_CODE
 
 ## 自動執行
 
-**povo session keeper** 預設在日本時間 `10:17`、`16:17`、`22:17`、次日 `04:17` 檢查。每次只在 `next_due_at` 已到時最多提交一次，並重新加密更新後的工作階段。GitHub cron 可能延遲；理論檢查間隔最長約 6 小時。
+**povo2.0 session keeper** 預設在日本時間 `10:17`、`16:17`、`22:17`、次日 `04:17` 檢查。每次只在 `next_due_at` 已到時最多提交一次，並重新加密更新後的工作階段。GitHub cron 可能延遲；理論檢查間隔最長約 6 小時。
 
 結果無法確認時會進入 `unknown` 並停止自動重試。
 

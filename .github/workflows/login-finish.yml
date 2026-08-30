@@ -1,4 +1,4 @@
-name: Finish povo email login
+name: Finish povo2.0 email login
 
 on:
   workflow_dispatch:
@@ -52,5 +52,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --force state/session.enc
           git rm --ignore-unmatch state/login.enc
-          git commit -m "Create encrypted povo session from email login"
+          git commit -m "Create encrypted povo2.0 session from email login"
           git push

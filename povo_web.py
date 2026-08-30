@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LAN-only Chinese dashboard for the povo automation worker."""
+"""LAN-only Chinese dashboard for the povo2.0 automation worker."""
 
 from __future__ import annotations
 
@@ -39,13 +39,13 @@ HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>povo 自动续费</title>
+<title>povo2.0 自动续费</title>
 <style>
 :root{color-scheme:dark;--bg:#0b0f14;--card:#141a22;--line:#283241;--text:#e7edf5;--muted:#91a0b3;--ok:#35c66b;--bad:#ff5d67;--accent:#5e9cff}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"PingFang SC",sans-serif}.wrap{max-width:980px;margin:0 auto;padding:28px 18px 50px}h1{font-size:25px;margin:0 0 4px}.sub{color:var(--muted);margin-bottom:22px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}.label{color:var(--muted);font-size:13px}.value{font-size:20px;font-weight:650;margin-top:6px;word-break:break-word}.ok{color:var(--ok)}.bad{color:var(--bad)}.section{margin-top:14px}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}button{border:1px solid var(--line);background:#202937;color:var(--text);border-radius:9px;padding:9px 13px;cursor:pointer}button.primary{background:var(--accent);color:#07101d;border-color:transparent;font-weight:700}button.danger{border-color:#743942;color:#ffafb5}button:disabled{opacity:.5;cursor:wait}input{background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px;width:260px}.history{max-height:300px;overflow:auto;margin-top:10px}.event{border-top:1px solid var(--line);padding:9px 0}.event:first-child{border-top:0}.event small{color:var(--muted)}#message{min-height:23px;margin-top:10px;color:var(--muted)}code{color:#b9d0f6}</style>
 </head>
 <body><main class="wrap">
-<h1>povo 自动续费</h1><div class="sub">直接 API 模式 · 页面不会显示令牌、邮箱或兑换码</div>
+<h1>povo2.0 自动续费</h1><div class="sub">直接 API 模式 · 页面不会显示令牌、邮箱或兑换码</div>
 <div class="grid">
   <div class="card"><div class="label">API 认证</div><div id="auth" class="value">读取中…</div></div>
   <div class="card"><div class="label">Worker</div><div id="worker" class="value">读取中…</div></div>
@@ -184,7 +184,7 @@ def status_payload() -> dict:
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "povo-dashboard/1.0"
+    server_version = "povo2.0-dashboard/1.0"
 
     def log_message(self, fmt, *args):
         print(f"{self.address_string()} {fmt % args}", flush=True)
@@ -212,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
             return True
         body = b"Authentication required"
         self.send_response(HTTPStatus.UNAUTHORIZED)
-        self.send_header("WWW-Authenticate", 'Basic realm="povo automation"')
+        self.send_header("WWW-Authenticate", 'Basic realm="povo2.0 automation"')
         self.headers_common("text/plain; charset=utf-8", len(body))
         self.end_headers()
         self.wfile.write(body)
@@ -298,7 +298,7 @@ def main() -> int:
     if not AUTH_FILE.exists():
         raise SystemExit("web_auth.json is missing")
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"povo dashboard listening on {PORT}", flush=True)
+    print(f"povo2.0 dashboard listening on {PORT}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

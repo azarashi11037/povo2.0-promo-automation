@@ -1,17 +1,17 @@
-# povo promo automation（实验性）
+# povo2.0 promo automation（实验性）
 
 简体中文 | [繁體中文](README.zh-Hant.md) | [日本語](README.ja.md) | [English](README.en.md)
 
-一个非官方、自托管的 povo promo code 定时执行器。支持通过 GitHub Actions 完成邮箱验证码登录、加密保存会话并按计划执行，也可以部署为带局域网管理面板的 Docker 服务。
+一个非官方、自托管的 povo2.0 promo code 定时执行器。支持通过 GitHub Actions 完成邮箱验证码登录、加密保存会话并按计划执行，也可以部署为带局域网管理面板的 Docker 服务。
 
 > [!WARNING]
-> 本项目使用未公开、可能随 povo App 更新而变化的接口，不受 povo/KDDI 支持或认可。请只操作本人有权管理的账户，并自行确认适用条款。项目不绕过验证码、TLS 校验、Root 限制或访问控制。
+> 本项目使用未公开、可能随 povo2.0 App 更新而变化的接口，不受 povo2.0/KDDI 支持或认可。请只操作本人有权管理的账户，并自行确认适用条款。项目不绕过验证码、TLS 校验、Root 限制或访问控制。
 
 ## 用户需要提供什么
 
 GitHub Actions 推荐模式只需要用户提供：
 
-1. povo 登录邮箱；
+1. povo2.0 登录邮箱；
 2. 邮件收到的最新 6 位验证码；
 3. 可重复使用的 promo code；
 4. 下一次执行时间。
@@ -36,17 +36,17 @@ GitHub Actions 推荐模式只需要用户提供：
 2. 在 **Settings → Actions → General → Workflow permissions** 中允许 Actions 读写仓库内容。
 3. 在 **Settings → Secrets and variables → Actions** 中建立：
    - `POVO_BUNDLE_KEY`：至少 20 字符，建议随机生成；
-   - `POVO_LOGIN_EMAIL`：本人的 povo 登录邮箱。
-4. 运行 **Start povo email login**，等待验证码邮件。
+   - `POVO_LOGIN_EMAIL`：本人的 povo2.0 登录邮箱。
+4. 运行 **Start povo2.0 email login**，等待验证码邮件。
 5. 立即建立：
    - `POVO_LOGIN_OTP`：最新邮件中的 6 位验证码；
    - `POVO_PROMO_CODE`：promo code。
-6. 在 15 分钟内运行 **Finish povo email login**，填写带时区的下一次执行时间，例如 `2026-09-06T16:17:00+09:00`。
+6. 在 15 分钟内运行 **Finish povo2.0 email login**，填写带时区的下一次执行时间，例如 `2026-09-06T16:17:00+09:00`。
 7. 确认仓库出现 `state/session.enc` 后，删除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 和 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
-如果需要在初始化后立即激活一次，可手动运行 **povo session keeper** 并明确勾选 `redeem_now`。该开关只对本次手动运行生效；定时运行不会绕过 `next_due_at`。
+如果需要在初始化后立即激活一次，可手动运行 **povo2.0 session keeper** 并明确勾选 `redeem_now`。该开关只对本次手动运行生效；定时运行不会绕过 `next_due_at`。
 
-之后 **povo session keeper** 会每天检查四次。GitHub cron 可能延迟，不能保证秒级执行。完整的网页操作、GitHub CLI 命令、恢复与密钥轮换方法见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
+之后 **povo2.0 session keeper** 会每天检查四次。GitHub cron 可能延迟，不能保证秒级执行。完整的网页操作、GitHub CLI 命令、恢复与密钥轮换方法见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
 
 ## Docker 自托管
 

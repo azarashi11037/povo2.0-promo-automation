@@ -18,9 +18,9 @@ GitHub Actions 模式适合公开 Fork。仓库只保存认证加密的 `state/l
 建立两个 Repository Secret：
 
 - `POVO_BUNDLE_KEY`：至少 20 字符；建议使用随机 32 字节值，长期保留。
-- `POVO_LOGIN_EMAIL`：本人 povo 账户的登录邮箱。
+- `POVO_LOGIN_EMAIL`：本人 povo2.0 账户的登录邮箱。
 
-进入 **Actions → Start povo email login → Run workflow**。成功后会收到邮件，仓库中会出现加密的 `state/login.enc`。
+进入 **Actions → Start povo2.0 email login → Run workflow**。成功后会收到邮件，仓库中会出现加密的 `state/login.enc`。
 
 ### 第二步：完成登录
 
@@ -29,7 +29,7 @@ GitHub Actions 模式适合公开 Fork。仓库只保存认证加密的 `state/l
 - `POVO_LOGIN_OTP`：6 位验证码。
 - `POVO_PROMO_CODE`：需要按计划使用的 promo code。
 
-进入 **Actions → Finish povo email login → Run workflow**，输入带时区的下一次执行时间，例如：
+进入 **Actions → Finish povo2.0 email login → Run workflow**，输入带时区的下一次执行时间，例如：
 
 ```text
 2026-09-06T16:17:00+09:00
@@ -45,7 +45,7 @@ GitHub Actions 模式适合公开 Fork。仓库只保存认证加密的 `state/l
 
 只保留 `POVO_BUNDLE_KEY`。
 
-若初始化账户还需要立即兑换一次，请手动运行 **povo session keeper**，并明确勾选 `redeem_now`。这是单次确认开关；定时触发时始终为关闭状态。兑换确认成功后，下一次时间会设置为成功时刻加 7 天 1 分钟。
+若初始化账户还需要立即兑换一次，请手动运行 **povo2.0 session keeper**，并明确勾选 `redeem_now`。这是单次确认开关；定时触发时始终为关闭状态。兑换确认成功后，下一次时间会设置为成功时刻加 7 天 1 分钟。
 
 ## GitHub CLI 方式
 
@@ -78,7 +78,7 @@ gh secret delete POVO_PROMO_CODE
 
 ## 初始化完成后如何运行
 
-**povo session keeper** 默认在 UTC `01:17`、`07:17`、`13:17`、`19:17` 检查，即日本时间 `10:17`、`16:17`、`22:17`、次日 `04:17`。每次运行会：
+**povo2.0 session keeper** 默认在 UTC `01:17`、`07:17`、`13:17`、`19:17` 检查，即日本时间 `10:17`、`16:17`、`22:17`、次日 `04:17`。每次运行会：
 
 1. 在临时 runner 中解密会话；
 2. 刷新会话；
@@ -98,7 +98,7 @@ GitHub cron 可能排队或延迟。当前设计的理论检查间隔最长约 6
 
 ## 备用：导入现有 Android 会话
 
-如果邮箱登录接口因 App 更新失效，可以改用 **Import encrypted povo session**。需要临时建立：
+如果邮箱登录接口因 App 更新失效，可以改用 **Import encrypted povo2.0 session**。需要临时建立：
 
 - `POVO_CREDENTIALS_B64`
 - `POVO_DEVICE_B64`
@@ -118,7 +118,7 @@ gh workflow run import-session.yml \
 ## 故障恢复
 
 - OTP 无效：确认使用的是最后一次发码后的最新邮件；重新开始时只运行一次发码工作流。
-- `state/login.enc` 过期：重新运行 **Start povo email login**，旧验证码作废。
+- `state/login.enc` 过期：重新运行 **Start povo2.0 email login**，旧验证码作废。
 - 丢失 `POVO_BUNDLE_KEY`：无法恢复密文，只能重新登录或重新导入。
 - 钥匙泄露：删除密文、轮换 Secret，并通过官方 App 更新账户会话。
 - Bot 无法 push：检查 Workflow permissions 和默认分支保护规则。

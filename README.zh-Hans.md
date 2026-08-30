@@ -1,0 +1,100 @@
+# povo2.0 promo automation（实验性）
+
+简体中文 | [繁體中文](README.zh-Hant.md) | [日本語](README.ja.md) | [English](README.en.md)
+
+一个非官方、自托管的 povo2.0 promo code 定时执行器。支持通过 GitHub Actions 完成邮箱验证码登录、加密保存会话并按计划执行，也可以部署为带局域网管理面板的 Docker 服务。
+
+> [!WARNING]
+> 本项目使用未公开、可能随 povo2.0 App 更新而变化的接口，不受 povo2.0/KDDI 支持或认可。请只操作本人有权管理的账户，并自行确认适用条款。项目不绕过验证码、TLS 校验、Root 限制或访问控制。
+
+## 用户需要提供什么
+
+GitHub Actions 推荐模式只需要用户提供：
+
+1. povo2.0 登录邮箱；
+2. 邮件收到的最新 6 位验证码；
+3. 可重复使用的 promo code；
+4. 下一次执行时间。
+
+这些内容不是填在同一个公开表单中。为了避免邮箱、验证码和兑换码出现在 Actions 历史里，它们必须通过 GitHub Repository Secrets 分两步保存。初始化完成后，可以删除邮箱、验证码和兑换码 Secret，只长期保留加密钥匙 `POVO_BUNDLE_KEY`。
+
+## 已实现
+
+- 无需常驻 Android 虚拟机的两阶段邮箱验证码登录；
+- AES-256-GCM 加密的会话、设备、兑换码和调度状态；
+- GitHub-hosted runner 中临时解密，任务结束后销毁明文；
+- 定期刷新会话，仅在到期后最多提交一次；
+- 结果不明确时进入 `unknown` 并停止自动重试；
+- 白名单式脱敏日志，不输出令牌、设备 ID、用户 ID 或兑换码；
+- 备用的 Android 会话文件导入方式；
+- Docker Worker 与默认仅绑定 `127.0.0.1` 的管理面板；
+- CI 中的语法检查、单元测试、Compose 校验和 Docker 构建。
+
+## GitHub Actions 快速开始
+
+1. Fork 本仓库。
+2. 在 **Settings → Actions → General → Workflow permissions** 中允许 Actions 读写仓库内容。
+3. 在 **Settings → Secrets and variables → Actions** 中建立：
+   - `POVO_BUNDLE_KEY`：至少 20 字符，建议随机生成；
+   - `POVO_LOGIN_EMAIL`：本人的 povo2.0 登录邮箱。
+4. 运行 **Start povo2.0 email login**，等待验证码邮件。
+5. 立即建立：
+   - `POVO_LOGIN_OTP`：最新邮件中的 6 位验证码；
+   - `POVO_PROMO_CODE`：promo code。
+6. 在 15 分钟内运行 **Finish povo2.0 email login**，填写带时区的下一次执行时间，例如 `2026-09-06T16:17:00+09:00`。
+7. 确认仓库出现 `state/session.enc` 后，删除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 和 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
+
+如果需要在初始化后立即激活一次，可手动运行 **povo2.0 session keeper** 并明确勾选 `redeem_now`。该开关只对本次手动运行生效；定时运行不会绕过 `next_due_at`。
+
+之后 **povo2.0 session keeper** 会每天检查四次。GitHub cron 可能延迟，不能保证秒级执行。完整的网页操作、GitHub CLI 命令、恢复与密钥轮换方法见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
+
+## Docker 自托管
+
+Docker 模式适合希望在自己服务器上运行 Worker 和局域网 WebUI 的用户。它需要已经合法取得、与本人账户匹配的 `credentials.xml` 和 `device.xml`。
+
+```bash
+cp .env.example .env
+python3 tools/init_data.py --data-dir ./data
+cp /your/authorized/path/credentials.xml ./data/credentials.xml
+cp /your/authorized/path/device.xml ./data/device.xml
+chmod 600 ./data/*
+docker compose up -d --build
+```
+
+打开 `http://127.0.0.1:17820/`，先执行只读认证检查。默认 `POVO_ENABLE_REDEMPTION=0`；确认会话和时间无误后，才在 `.env` 中改为：
+
+```dotenv
+POVO_ENABLE_REDEMPTION=1
+```
+
+## 安全边界
+
+- 不要在 Issue、Pull Request、工作流普通输入、日志或截图中提交认证信息。
+- 不要把 `.env`、`data/`、XML、兑换码或解密后的状态加入 Git。
+- Dashboard 只应绑定回环地址或可信内网；公网访问必须加认证 HTTPS 反向代理。
+- 一次提交结果无法确认时，不要连续重跑。
+- 详细要求见 [SECURITY.md](SECURITY.md)。
+
+## 已知限制
+
+- 接口未公开，App 更新后可能失效；
+- 账户同时存在多个 add-on 时可能返回 `MULTIPLE_ADDONS_FOUND`，目前尚未解决；
+- GitHub 定时任务可能排队或延迟；
+- GitHub 两阶段工作流仍需要用户在 15 分钟内手动提供邮件验证码；
+- 本项目不能视为生产级或运营商官方工具。
+
+## 测试
+
+```bash
+python3 -m unittest discover -s tests -v
+docker compose config
+docker compose build
+```
+
+## 贡献者
+
+项目贡献记录见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。[@codex](https://github.com/codex) 作为 OpenAI 的 AI 编程助手参与了架构、实现、测试、安全检查和多语言文档，但不是人工维护者。
+
+## 开源协议与免责声明
+
+本项目采用 [MIT License](LICENSE)。接口、字段和业务规则可能变化；错误使用可能造成会话失效、重复提交或账户限制。项目作者不提供任何明示或暗示担保，使用者自行承担风险。

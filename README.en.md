@@ -44,6 +44,8 @@ These values are not entered together in a public form. To keep the email addres
 6. Within 15 minutes, run **Finish povo email login** and enter the next execution time with a timezone, for example `2026-09-06T16:17:00+09:00`.
 7. After `state/session.enc` appears, delete `POVO_LOGIN_EMAIL`, `POVO_LOGIN_OTP`, and `POVO_PROMO_CODE`. Keep `POVO_BUNDLE_KEY`.
 
+To activate once immediately after initialization, manually run **povo session keeper** and explicitly enable `redeem_now`. The switch applies only to that manual run; scheduled runs never bypass `next_due_at`.
+
 The **povo session keeper** workflow then checks four times per day. GitHub cron can be delayed and is not suitable for second-level timing. See the [GitHub Actions guide](docs/GITHUB_ACTIONS.en.md) for detailed UI steps, GitHub CLI commands, recovery, and key rotation.
 
 ## Docker self-hosting

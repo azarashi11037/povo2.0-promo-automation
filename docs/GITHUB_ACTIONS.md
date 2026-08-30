@@ -45,6 +45,8 @@ GitHub Actions 模式适合公开 Fork。仓库只保存认证加密的 `state/l
 
 只保留 `POVO_BUNDLE_KEY`。
 
+若初始化账户还需要立即兑换一次，请手动运行 **povo session keeper**，并明确勾选 `redeem_now`。这是单次确认开关；定时触发时始终为关闭状态。兑换确认成功后，下一次时间会设置为成功时刻加 7 天 1 分钟。
+
 ## GitHub CLI 方式
 
 以下命令会让 `gh secret set` 在终端中安全提示输入值，不要把 Secret 直接写在命令参数里：

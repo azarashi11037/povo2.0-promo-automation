@@ -44,6 +44,8 @@ povo の promo code を指定時刻に処理するための、非公式かつセ
 6. 15 分以内に **Finish povo email login** を実行し、タイムゾーン付きの次回日時（例：`2026-09-06T16:17:00+09:00`）を入力します。
 7. `state/session.enc` が作成されたことを確認し、`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除します。`POVO_BUNDLE_KEY` は残します。
 
+初期化直後に 1 回だけ有効化する場合は、**povo session keeper** を手動実行し、`redeem_now` を明示的にオンにします。この設定はその手動実行だけに適用され、定期実行が `next_due_at` を無視することはありません。
+
 以後、**povo session keeper** が 1 日 4 回確認します。GitHub cron は遅延することがあり、秒単位の正確な実行は保証できません。Web 画面での詳しい操作、GitHub CLI、復旧、キーのローテーションは [GitHub Actions ガイド](docs/GITHUB_ACTIONS.ja.md) を参照してください。
 
 ## Docker セルフホスト

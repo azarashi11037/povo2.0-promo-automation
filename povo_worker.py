@@ -307,8 +307,8 @@ def recover_interrupted_submission() -> None:
         save_state(state)
 
 
-def run_once() -> int:
-    """Refresh the session and execute at most one due redemption."""
+def run_once(*, redeem_now: bool = False) -> int:
+    """Refresh the session and execute at most one authorized redemption."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     recover_interrupted_submission()
     append_history("github_run_started")
@@ -319,9 +319,11 @@ def run_once() -> int:
     if state.get("paused"):
         log("Scheduler is paused; session refresh completed.")
         return 0
-    if not due_now(state):
+    if not redeem_now and not due_now(state):
         log("Redemption is not due; session refresh completed.")
         return 0
+    if redeem_now:
+        log("A manually confirmed immediate redemption was requested.")
     return redeem_once()
 
 
@@ -330,10 +332,17 @@ def main() -> int:
     parser.add_argument(
         "--once", action="store_true", help="refresh once and execute at most one due run"
     )
+    parser.add_argument(
+        "--redeem-now",
+        action="store_true",
+        help="immediately redeem once; requires POVO_CONFIRM_REDEEM_NOW=1",
+    )
     args = parser.parse_args()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if args.once:
-        return run_once()
+    if args.redeem_now and os.environ.get("POVO_CONFIRM_REDEEM_NOW") != "1":
+        parser.error("--redeem-now requires POVO_CONFIRM_REDEEM_NOW=1")
+    if args.once or args.redeem_now:
+        return run_once(redeem_now=args.redeem_now)
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 

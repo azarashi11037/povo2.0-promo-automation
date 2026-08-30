@@ -39,6 +39,8 @@ GitHub Actions 模式適合公開 Fork。倉庫只保存經驗證加密的 `stat
 
 成功後，`state/login.enc` 會由 `state/session.enc` 取代。刪除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 與 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
+若初始化帳戶還需要立即兌換一次，請手動執行 **povo session keeper** 並明確勾選 `redeem_now`。這是單次確認開關；排程觸發時永遠關閉。確認兌換成功後，下一次時間會設為成功時刻加 7 天 1 分鐘。
+
 ## GitHub CLI 方式
 
 `gh secret set` 會在終端機安全提示輸入值，不要把 Secret 直接寫入命令參數：

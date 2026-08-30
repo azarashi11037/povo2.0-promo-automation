@@ -39,6 +39,8 @@ OTP チャレンジは 15 分間だけ有効です。Start を再実行した場
 
 成功すると `state/login.enc` が `state/session.enc` に置き換わります。`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除し、`POVO_BUNDLE_KEY` だけを残します。
 
+初期化したアカウントで直ちに 1 回だけ交換する場合は、**povo session keeper** を手動実行し、`redeem_now` を明示的にオンにしてください。これは 1 回限りの確認スイッチで、定期実行時は常にオフです。交換成功後、次回時刻は成功時刻の 7 日 1 分後に設定されます。
+
 ## GitHub CLI
 
 `gh secret set` は端末上で値を安全に入力できます。Secret をコマンド引数に直接書かないでください。

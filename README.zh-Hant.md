@@ -44,6 +44,8 @@ GitHub Actions 推薦模式只需要使用者提供：
 6. 在 15 分鐘內執行 **Finish povo email login**，輸入含時區的下一次執行時間，例如 `2026-09-06T16:17:00+09:00`。
 7. 確認倉庫出現 `state/session.enc` 後，刪除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 與 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
+若初始化後需要立即啟用一次，可手動執行 **povo session keeper** 並明確勾選 `redeem_now`。此開關只對本次手動執行有效；排程執行不會繞過 `next_due_at`。
+
 之後 **povo session keeper** 每天檢查四次。GitHub cron 可能延遲，無法保證秒級準時。完整網頁操作、GitHub CLI 指令、復原與金鑰輪替方式請參閱 [GitHub Actions 使用說明](docs/GITHUB_ACTIONS.zh-Hant.md)。
 
 ## Docker 自行託管

@@ -5,6 +5,12 @@ on:
     # Four checks per day. GitHub schedules may start late during busy periods.
     - cron: "17 1,7,13,19 * * *"
   workflow_dispatch:
+    inputs:
+      redeem_now:
+        description: "Explicitly redeem once now, ignoring next_due_at"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -41,7 +47,14 @@ jobs:
         continue-on-error: true
         env:
           POVO_DATA_DIR: ${{ runner.temp }}/povo-data
-        run: python povo_worker.py --once
+          POVO_CONFIRM_REDEEM_NOW: ${{ github.event_name == 'workflow_dispatch' && inputs.redeem_now && '1' || '0' }}
+        run: |
+          set -euo pipefail
+          if [[ "$POVO_CONFIRM_REDEEM_NOW" == "1" ]]; then
+            python povo_worker.py --redeem-now
+          else
+            python povo_worker.py --once
+          fi
       - name: Re-encrypt updated session
         id: encrypt
         if: always() && steps.decrypt.outcome == 'success'

@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       POVO_BUNDLE_KEY: ${{ secrets.POVO_BUNDLE_KEY }}
-      POVO_DATA_DIR: ${{ runner.temp }}/povo-data
       POVO_ENABLE_REDEMPTION: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,6 +28,8 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - name: Decrypt private session into the ephemeral runner
         id: decrypt
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
         run: |
           set -euo pipefail
           test -s state/session.enc
@@ -38,10 +39,14 @@ jobs:
       - name: Refresh once and redeem only when due
         id: execute
         continue-on-error: true
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
         run: python povo_worker.py --once
       - name: Re-encrypt updated session
         id: encrypt
         if: always() && steps.decrypt.outcome == 'success'
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
         run: |
           set -euo pipefail
           python tools/session_bundle.py pack \

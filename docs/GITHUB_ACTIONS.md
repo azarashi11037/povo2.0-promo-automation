@@ -10,7 +10,39 @@
 
 会话包采用 scrypt 派生密钥，并使用随机 salt、nonce 和认证加密。知道公开密文但不知道 `POVO_BUNDLE_KEY`，不能直接还原其中内容。
 
-## 一次性初始化
+## 推荐：邮箱验证码初始化
+
+这条路径不需要 Android 虚拟机，也不需要导出 App 文件。邮箱和验证码都使用 Repository Secret，不能作为普通 `workflow_dispatch` 输入。
+
+先在 Fork 的 Settings → Secrets and variables → Actions 中建立：
+
+- `POVO_BUNDLE_KEY`：至少 20 字符，建议随机 32 字节；长期保留。
+- `POVO_LOGIN_EMAIL`：本人的 povo 登录邮箱。
+
+然后在 Actions 页面运行 **Start povo email login**。它会发送一封验证码邮件，并且只把短期登录挑战的 AES-256-GCM 密文提交为 `state/login.enc`。
+
+收到最新验证码后，立即再建立：
+
+- `POVO_LOGIN_OTP`：最新邮件中的 6 位验证码。
+- `POVO_PROMO_CODE`：需要按计划使用的 promo code。
+
+在 15 分钟内运行 **Finish povo email login**，输入下一次执行时间，例如：
+
+```text
+2026-09-06T16:17:00+09:00
+```
+
+成功后，工作流会用 `state/session.enc` 替换 `state/login.enc`。随后删除三个一次性 Secret，只保留 `POVO_BUNDLE_KEY`：
+
+```bash
+gh secret delete POVO_LOGIN_EMAIL
+gh secret delete POVO_LOGIN_OTP
+gh secret delete POVO_PROMO_CODE
+```
+
+如果验证码失效或登录失败，工作流不会自动重发；重新运行 **Start povo email login** 才会发送新验证码。务必使用最新一封邮件，旧挑战与新验证码不能混用。
+
+## 备用：导入已有 Android 会话
 
 先 Fork 仓库，并在 Fork 的 Settings → Secrets and variables → Actions 中建立：
 
@@ -58,11 +90,9 @@ GitHub 的 cron 不是实时调度器，高峰期可能延迟。当前四次检�
 
 如果一次提交的结果无法确认，状态会变成 `unknown`，后续自动重试会被阻止。请先查脱敏的 Actions 日志，不要连续重跑。
 
-## 邮箱与验证码
+## 邮箱与验证码的边界
 
-当前版本**不支持直接在 GitHub 页面输入 povo 邮箱和验证码来创建会话**。`workflow_dispatch` 的普通输入不是 Secret，验证码也不应放在工作流输入或日志中。现阶段仍需先合法取得本人账户已有的 Android 会话文件，再执行一次性加密导入。
-
-只有在 povo 邮箱登录的请求地址、请求体、设备绑定和票据持久化流程都经过合法、可重复验证后，才适合增加“两阶段登录”工作流；本项目不会根据 APK 字符串猜测登录接口，也不会绕过证书固定或访问控制。
+两阶段工作流只调用当前 App 使用的邮箱登录链路，不绕过验证码、证书校验或访问控制。普通工作流输入会显示在运行记录中，所以邮箱与验证码必须放在 Repository Secrets；成功后应立即删除一次性 Secret。接口属于未公开实现，App 更新后可能变化。
 
 ## 恢复与轮换
 

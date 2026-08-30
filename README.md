@@ -13,6 +13,7 @@
 - 已知限制：账户同时存在多个 add-on 时，服务端可能返回 `MULTIPLE_ADDONS_FOUND`。该场景尚未解决，不能视为生产级工具。
 - 默认 `POVO_ENABLE_REDEMPTION=0`，不会提交兑换请求。
 - 可选 GitHub Actions 模式只提交认证加密的会话密文，标准 runner 内临时解密。
+- GitHub Actions 可通过两阶段邮箱验证码登录创建加密会话，不需要常驻 Android 虚拟机。
 
 ## 安全设计
 
@@ -75,7 +76,7 @@ docker compose down
 
 可以采用类似签到项目的方式，把解密钥匙放在 GitHub Repository Secrets，把加密后的会话状态放在公开仓库。完整设置、Secret 清单、轮换和故障恢复见 [GitHub Actions 模式](docs/GITHUB_ACTIONS.md)。
 
-这不会把邮箱登录自动变成可用接口。当前 GitHub 模式只接受本人已合法持有的会话文件；尚未验证的邮箱 OTP 直登流程不会被猜测或公开。
+推荐使用 **Start povo email login** 与 **Finish povo email login** 两个工作流。邮箱、验证码和 promo code 必须通过 Repository Secrets 提供，不能放在普通工作流输入中；成功后只在仓库保留认证加密的 `state/session.enc`。已有 Android 会话文件仍可作为备用导入方式。
 
 ## 测试
 

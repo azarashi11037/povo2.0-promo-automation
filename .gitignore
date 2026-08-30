@@ -19,3 +19,4 @@ code
 *.log
 /state/*
 !/state/.gitkeep
+!/state/*.enc

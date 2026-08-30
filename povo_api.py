@@ -31,6 +31,10 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 BASE_URL = os.environ.get("POVO_BASE_URL", "https://app.povo.jp")
 APP_VERSION = os.environ.get("POVO_APP_VERSION", "1.70.0-JP")
+USER_AGENT = os.environ.get(
+    "POVO_USER_AGENT",
+    f"selfcare/{APP_VERSION} Android/14 sdk_gphone64_x86_64/en_US",
+)
 REFRESH_PATH = "/api/v3/user-service/v4/jp/ja/mobile/users/token"
 PROFILE_PATH = "/api/v3/user-service/v4/jp/ja/mobile/users?include_telco=true"
 REDEEM_PATH = "/v4/jp/ja/mobile/promotions/code/set"
@@ -131,6 +135,24 @@ def _jwt_claims(token: str) -> dict[str, Any]:
     return json.loads(_b64decode(parts[1]))
 
 
+def _stored_session(device_id: str, token: str, migration_enabled: bool) -> str:
+    """Encode a JWT exactly as povo's encrypted SharedPreferences session value."""
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise ValueError("session is not a three-part JWT")
+    _jwt_claims(token)
+    password = hashlib.sha256(device_id.encode()).hexdigest()
+    encrypted_payload = base64.b64encode(
+        _encrypt(password, parts[1].encode())
+    ).decode()
+    inner = f"{parts[0]}.{encrypted_payload}.{parts[2]}"
+    return (
+        base64.b64encode(_encrypt(password, inner.encode())).decode()
+        if migration_enabled
+        else inner
+    )
+
+
 @dataclass
 class Credentials:
     credentials_path: Path
@@ -170,19 +192,54 @@ class Credentials:
             token,
         )
 
-    def persist_token(self, token: str) -> None:
-        parts = token.split(".")
-        if len(parts) != 3:
-            raise ValueError("refreshed session is not a three-part JWT")
-        encrypted_payload = base64.b64encode(
-            _encrypt(self.password, parts[1].encode())
-        ).decode()
-        inner = f"{parts[0]}.{encrypted_payload}.{parts[2]}"
-        stored = (
-            base64.b64encode(_encrypt(self.password, inner.encode())).decode()
-            if self.migration_enabled
-            else inner
+    @classmethod
+    def create(
+        cls,
+        credentials_path: Path,
+        device_path: Path,
+        device_id: str,
+        token: str,
+        migration_enabled: bool = True,
+    ) -> "Credentials":
+        """Create the minimal private XML files needed by this client."""
+        credentials_path.parent.mkdir(parents=True, exist_ok=True)
+        device_path.parent.mkdir(parents=True, exist_ok=True)
+
+        credentials_root = ET.Element("map")
+        session = ET.SubElement(credentials_root, "string", {"name": "session_key"})
+        session.text = _stored_session(device_id, token, migration_enabled)
+        ET.SubElement(
+            credentials_root,
+            "boolean",
+            {
+                "name": "session_key_migration_status",
+                "value": "true" if migration_enabled else "false",
+            },
         )
+        device_root = ET.Element("map")
+        device = ET.SubElement(device_root, "string", {"name": "device_uuid"})
+        device.text = device_id
+
+        for path, root in (
+            (credentials_path, credentials_root),
+            (device_path, device_root),
+        ):
+            tree = ET.ElementTree(root)
+            fd, temporary = tempfile.mkstemp(
+                prefix=f".{path.name}-", suffix=".tmp", dir=path.parent
+            )
+            try:
+                os.close(fd)
+                tree.write(temporary, encoding="utf-8", xml_declaration=True)
+                os.chmod(temporary, 0o600)
+                os.replace(temporary, path)
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+        return cls.load(credentials_path, device_path)
+
+    def persist_token(self, token: str) -> None:
+        stored = _stored_session(self.device_id, token, self.migration_enabled)
 
         tree = ET.parse(self.credentials_path)
         root = tree.getroot()
@@ -219,7 +276,7 @@ class PovoClient:
         return {
             "Accept": "application/json",
             "Accept-Language": "ja-JP",
-            "User-Agent": f"povo/{APP_VERSION} (Android)",
+            "User-Agent": USER_AGENT,
             "X-AUTH": self.credentials.token,
             "X-USER-ID": str(claims.get("external_id", "")),
             "X-App-Platform": "Android",

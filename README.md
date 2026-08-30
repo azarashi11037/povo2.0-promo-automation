@@ -89,6 +89,10 @@ docker compose config
 docker compose build
 ```
 
+## 贡献者
+
+项目贡献记录见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。OpenAI Codex 作为 AI 编程助手参与了架构、实现、测试、安全检查和多语言文档，但不是独立的 GitHub 账号或人工维护者。
+
 ## 开源协议与免责声明
 
 本项目采用 [MIT License](LICENSE)。接口、字段和业务规则可能变化；错误使用可能造成会话失效、重复提交或账户限制。项目作者不提供任何明示或暗示担保，使用者自行承担风险。

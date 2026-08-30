@@ -81,6 +81,10 @@ POVO_ENABLE_REDEMPTION=1
 - The user must still provide the email OTP manually within 15 minutes.
 - This is not a production-grade or carrier-supported tool.
 
+## Contributors
+
+See [CONTRIBUTORS.md](CONTRIBUTORS.md). OpenAI Codex assisted with architecture, implementation, testing, security review, and multilingual documentation as an AI coding assistant. It is not a separate GitHub account or a human maintainer.
+
 ## License and disclaimer
 
 This project is licensed under the [MIT License](LICENSE). APIs, fields, and business rules may change. Misuse can invalidate sessions, cause duplicate submissions, or trigger account restrictions. The software is provided without warranty; users assume all risk.

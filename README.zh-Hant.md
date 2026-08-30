@@ -83,7 +83,7 @@ POVO_ENABLE_REDEMPTION=1
 
 ## 貢獻者
 
-貢獻記錄請參閱 [CONTRIBUTORS.md](CONTRIBUTORS.md)。OpenAI Codex 以 AI 程式設計助手身分參與架構、實作、測試、安全檢查與多語言文件，但不是獨立 GitHub 帳號或人工維護者。
+貢獻記錄請參閱 [CONTRIBUTORS.md](CONTRIBUTORS.md)。[@codex](https://github.com/codex) 以 OpenAI AI 程式設計助手身分參與架構、實作、測試、安全檢查與多語言文件，但不是人工維護者。
 
 ## 授權與免責聲明
 

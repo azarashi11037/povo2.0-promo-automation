@@ -83,7 +83,7 @@ POVO_ENABLE_REDEMPTION=1
 
 ## Contributors
 
-See [CONTRIBUTORS.md](CONTRIBUTORS.md). OpenAI Codex assisted with architecture, implementation, testing, security review, and multilingual documentation as an AI coding assistant. It is not a separate GitHub account or a human maintainer.
+See [CONTRIBUTORS.md](CONTRIBUTORS.md). OpenAI's AI coding assistant [@codex](https://github.com/codex) assisted with architecture, implementation, testing, security review, and multilingual documentation. It is not a human maintainer.
 
 ## License and disclaimer
 

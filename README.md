@@ -91,7 +91,7 @@ docker compose build
 
 ## 贡献者
 
-项目贡献记录见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。OpenAI Codex 作为 AI 编程助手参与了架构、实现、测试、安全检查和多语言文档，但不是独立的 GitHub 账号或人工维护者。
+项目贡献记录见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。[@codex](https://github.com/codex) 作为 OpenAI 的 AI 编程助手参与了架构、实现、测试、安全检查和多语言文档，但不是人工维护者。
 
 ## 开源协议与免责声明
 

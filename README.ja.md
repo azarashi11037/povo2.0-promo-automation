@@ -83,7 +83,7 @@ POVO_ENABLE_REDEMPTION=1
 
 ## コントリビューター
 
-貢献者情報は [CONTRIBUTORS.md](CONTRIBUTORS.md) を参照してください。OpenAI Codex は AI コーディングアシスタントとして、設計、実装、テスト、セキュリティ確認、多言語ドキュメントを支援しました。独立した GitHub アカウントまたは人間のメンテナーではありません。
+貢献者情報は [CONTRIBUTORS.md](CONTRIBUTORS.md) を参照してください。OpenAI の AI コーディングアシスタント [@codex](https://github.com/codex) が、設計、実装、テスト、セキュリティ確認、多言語ドキュメントを支援しました。人間のメンテナーではありません。
 
 ## ライセンスと免責事項
 

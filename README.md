@@ -17,8 +17,7 @@ GitHub Actions 推荐模式只需要用户提供：
 
 1. povo2.0 登录邮箱；
 2. 邮件收到的最新 6 位验证码；
-3. 可重复使用的 promo code；
-4. 下一次执行时间。
+3. 可重复使用的 promo code。
 
 这些内容不是填在同一个公开表单中。为了避免邮箱、验证码和兑换码出现在 Actions 历史里，它们必须通过 GitHub Repository Secrets 分两步保存。初始化完成后，可以删除邮箱、验证码和兑换码 Secret，只长期保留加密钥匙 `POVO_BUNDLE_KEY`。
 
@@ -45,10 +44,10 @@ GitHub Actions 推荐模式只需要用户提供：
 5. 立即建立：
    - `POVO_LOGIN_OTP`：最新邮件中的 6 位验证码；
    - `POVO_PROMO_CODE`：promo code。
-6. 在 15 分钟内运行 **Finish povo2.0 email login**，填写带时区的下一次执行时间，例如 `2026-09-06T16:17:00+09:00`。
+6. 在 15 分钟内运行 **Finish povo2.0 login and redeem once**。运行此工作流即表示明确确认首次兑换；确认成功后，系统自动将下一次时间设为成功时刻加 7 天 1 分钟，无需手动填写日期。
 7. 确认仓库出现 `state/session.enc` 后，删除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 和 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
-如果需要在初始化后立即激活一次，可手动运行 **povo2.0 session keeper** 并明确勾选 `redeem_now`。该开关只对本次手动运行生效；定时运行不会绕过 `next_due_at`。
+当前登录/账户检查接口没有已验证可靠的 promo 到期字段。JWT 的过期时间只是短期登录令牌期限，不能当作套餐到期时间。因此推荐流程以首次兑换确认成功的时刻自动起算，而不会猜测或误读到期时间。
 
 之后 **povo2.0 session keeper** 会每天检查四次。GitHub cron 可能延迟，不能保证秒级执行。完整的网页操作、GitHub CLI 命令、恢复与密钥轮换方法见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
 
@@ -84,6 +83,7 @@ POVO_ENABLE_REDEMPTION=1
 - 接口未公开，App 更新后可能失效；
 - 账户同时存在多个 add-on 时可能返回 `MULTIPLE_ADDONS_FOUND`，目前尚未解决；
 - GitHub 定时任务可能排队或延迟；
+- 当前无法在登录后可靠读取现有 promo 的到期时间；
 - GitHub 两阶段工作流仍需要用户在 15 分钟内手动提供邮件验证码；
 - 本项目不能视为生产级或运营商官方工具。
 
@@ -122,8 +122,7 @@ GitHub Actions 推薦模式只需要使用者提供：
 
 1. povo2.0 登入電子郵件；
 2. 郵件中最新的 6 位驗證碼；
-3. 可重複使用的 promo code；
-4. 下一次執行時間。
+3. 可重複使用的 promo code。
 
 這些資料不會填入同一個公開表單。為避免電子郵件、驗證碼與兌換碼出現在 Actions 歷史中，必須透過 GitHub Repository Secrets 分兩個階段保存。初始化完成後，可刪除電子郵件、驗證碼及兌換碼 Secret，只長期保留加密金鑰 `POVO_BUNDLE_KEY`。
 
@@ -150,10 +149,10 @@ GitHub Actions 推薦模式只需要使用者提供：
 5. 立即建立：
    - `POVO_LOGIN_OTP`：最新郵件中的 6 位驗證碼；
    - `POVO_PROMO_CODE`：promo code。
-6. 在 15 分鐘內執行 **Finish povo2.0 email login**，輸入含時區的下一次執行時間，例如 `2026-09-06T16:17:00+09:00`。
+6. 在 15 分鐘內執行 **Finish povo2.0 login and redeem once**。執行此工作流程即表示明確確認首次兌換；確認成功後，系統會自動將下一次時間設為成功時刻加 7 天 1 分鐘，不需手動輸入日期。
 7. 確認倉庫出現 `state/session.enc` 後，刪除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 與 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
-若初始化後需要立即啟用一次，可手動執行 **povo2.0 session keeper** 並明確勾選 `redeem_now`。此開關只對本次手動執行有效；排程執行不會繞過 `next_due_at`。
+目前登入／帳戶檢查介面沒有經驗證且可靠的 promo 到期欄位。JWT 的到期時間只是短期登入權杖期限，不能視為方案到期時間。因此建議流程以首次兌換確認成功的時刻自動起算，不會猜測或誤讀到期時間。
 
 之後 **povo2.0 session keeper** 每天檢查四次。GitHub cron 可能延遲，無法保證秒級準時。完整網頁操作、GitHub CLI 指令、復原與金鑰輪替方式請參閱 [GitHub Actions 使用說明](docs/GITHUB_ACTIONS.zh-Hant.md)。
 
@@ -189,6 +188,7 @@ POVO_ENABLE_REDEMPTION=1
 - 介面未公開，App 更新後可能失效；
 - 帳戶同時存在多個 add-on 時可能回傳 `MULTIPLE_ADDONS_FOUND`，目前尚未解決；
 - GitHub 排程可能排隊或延遲；
+- 目前無法在登入後可靠讀取既有 promo 的到期時間；
 - 兩階段登入仍需要使用者在 15 分鐘內手動提供郵件驗證碼；
 - 本專案不是生產級或電信業者官方工具。
 
@@ -220,7 +220,6 @@ povo2.0 の promo code を指定時刻に処理するための、非公式かつ
 1. povo2.0 のログイン用メールアドレス
 2. 最新メールに記載された 6 桁の OTP
 3. 再利用可能な promo code
-4. 次回実行日時
 
 これらを一つの公開フォームへまとめて入力する方式ではありません。メールアドレス、OTP、コードを Actions 履歴に残さないため、GitHub Repository Secrets を使って二段階で設定します。初期化後はメール、OTP、コードの Secret を削除し、長期保存するのは暗号化キー `POVO_BUNDLE_KEY` だけです。
 
@@ -247,10 +246,10 @@ povo2.0 の promo code を指定時刻に処理するための、非公式かつ
 5. メール到着後、すぐに次を作成します。
    - `POVO_LOGIN_OTP`：最新メールの 6 桁 OTP。
    - `POVO_PROMO_CODE`：promo code。
-6. 15 分以内に **Finish povo2.0 email login** を実行し、タイムゾーン付きの次回日時（例：`2026-09-06T16:17:00+09:00`）を入力します。
+6. 15 分以内に **Finish povo2.0 login and redeem once** を実行します。この workflow の実行が初回交換の明示的な確認となり、成功時刻の 7 日 1 分後が次回時刻として自動設定されます。日時の手入力は不要です。
 7. `state/session.enc` が作成されたことを確認し、`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除します。`POVO_BUNDLE_KEY` は残します。
 
-初期化直後に 1 回だけ有効化する場合は、**povo2.0 session keeper** を手動実行し、`redeem_now` を明示的にオンにします。この設定はその手動実行だけに適用され、定期実行が `next_due_at` を無視することはありません。
+現在のログイン／アカウント確認 API には、検証済みで信頼できる promo の有効期限フィールドがありません。JWT の期限は短期ログイントークンの期限であり、プランの期限ではありません。そのため、推測した期限ではなく、確認済みの初回交換成功時刻を起点にします。
 
 以後、**povo2.0 session keeper** が 1 日 4 回確認します。GitHub cron は遅延することがあり、秒単位の正確な実行は保証できません。Web 画面での詳しい操作、GitHub CLI、復旧、キーのローテーションは [GitHub Actions ガイド](docs/GITHUB_ACTIONS.ja.md) を参照してください。
 
@@ -286,6 +285,7 @@ POVO_ENABLE_REDEMPTION=1
 - 非公開 API のため、アプリ更新後に動作しなくなる可能性があります。
 - 複数の add-on があるアカウントでは `MULTIPLE_ADDONS_FOUND` が返る場合があり、未解決です。
 - GitHub のスケジュール実行は待機または遅延する場合があります。
+- 現在、ログイン後に既存 promo の有効期限を確実に読み取ることはできません。
 - メール OTP は利用者が 15 分以内に手動で設定する必要があります。
 - 本プロジェクトは本番品質または通信事業者の公式ツールではありません。
 
@@ -316,8 +316,7 @@ The recommended GitHub Actions flow needs only:
 
 1. the povo2.0 login email address;
 2. the latest six-digit OTP received by email;
-3. a reusable promo code; and
-4. the next scheduled execution time.
+3. a reusable promo code.
 
 These values are not entered together in a public form. To keep the email address, OTP, and promo code out of Actions history, they are stored as GitHub Repository Secrets in two stages. After initialization, the email, OTP, and promo-code secrets can be deleted; only `POVO_BUNDLE_KEY` must remain.
 
@@ -344,10 +343,10 @@ These values are not entered together in a public form. To keep the email addres
 5. Immediately create:
    - `POVO_LOGIN_OTP`: the six-digit code from the latest email.
    - `POVO_PROMO_CODE`: the promo code.
-6. Within 15 minutes, run **Finish povo2.0 email login** and enter the next execution time with a timezone, for example `2026-09-06T16:17:00+09:00`.
+6. Within 15 minutes, run **Finish povo2.0 login and redeem once**. Running this workflow explicitly confirms the first redemption. After confirmed success, the next due time is automatically set to 7 days and 1 minute after that success; no date entry is required.
 7. After `state/session.enc` appears, delete `POVO_LOGIN_EMAIL`, `POVO_LOGIN_OTP`, and `POVO_PROMO_CODE`. Keep `POVO_BUNDLE_KEY`.
 
-To activate once immediately after initialization, manually run **povo2.0 session keeper** and explicitly enable `redeem_now`. The switch applies only to that manual run; scheduled runs never bypass `next_due_at`.
+The current login/account-check endpoint has no verified, reliable promo-expiration field. JWT expiry is only the short-lived login-token expiry and must not be treated as the plan expiry. The recommended flow therefore starts from the confirmed first-redemption time instead of guessing or misreading an expiration date.
 
 The **povo2.0 session keeper** workflow then checks four times per day. GitHub cron can be delayed and is not suitable for second-level timing. See the [GitHub Actions guide](docs/GITHUB_ACTIONS.en.md) for detailed UI steps, GitHub CLI commands, recovery, and key rotation.
 
@@ -383,6 +382,7 @@ POVO_ENABLE_REDEMPTION=1
 - Undocumented APIs may stop working after an app update.
 - Accounts with multiple add-ons may return `MULTIPLE_ADDONS_FOUND`; this is unresolved.
 - GitHub scheduled jobs may queue or run late.
+- The expiration of an existing promo cannot currently be read reliably after login.
 - The user must still provide the email OTP manually within 15 minutes.
 - This is not a production-grade or carrier-supported tool.
 

@@ -29,17 +29,13 @@ Repository Secret を二つ作成します。
 - `POVO_LOGIN_OTP`：6 桁 OTP。
 - `POVO_PROMO_CODE`：スケジュール実行する promo code。
 
-**Actions → Finish povo2.0 email login → Run workflow** を開き、タイムゾーン付きの次回実行日時を入力します。
-
-```text
-2026-09-06T16:17:00+09:00
-```
+**Actions → Finish povo2.0 login and redeem once → Run workflow** を実行します。この明示的な名前の workflow を実行することが、初回交換を 1 回送信する確認になります。
 
 OTP チャレンジは 15 分間だけ有効です。Start を再実行した場合、以前のメールは使わず、新しいメールだけを使用してください。
 
-成功すると `state/login.enc` が `state/session.enc` に置き換わります。`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除し、`POVO_BUNDLE_KEY` だけを残します。
+初回交換が確認済みの成功となった後、その成功分を起点として `next_due_at` が 7 日 1 分後に自動設定されます。初回日時の手入力は不要です。その後、`state/login.enc` が `state/session.enc` に置き換わります。`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除し、`POVO_BUNDLE_KEY` だけを残します。
 
-初期化したアカウントで直ちに 1 回だけ交換する場合は、**povo2.0 session keeper** を手動実行し、`redeem_now` を明示的にオンにしてください。これは 1 回限りの確認スイッチで、定期実行時は常にオフです。交換成功後、次回時刻は成功時刻の 7 日 1 分後に設定されます。
+ログイン後のアカウント確認 API には、検証済みで信頼できる promo の有効期限フィールドがありません。JWT の期限は短期ログイントークンの期限です。本プロジェクトは JWT の期限をプラン期限として扱わず、既存 promo の期限も推測しません。
 
 ## GitHub CLI
 
@@ -56,8 +52,7 @@ gh workflow run login-start.yml
 ```bash
 gh secret set POVO_LOGIN_OTP
 gh secret set POVO_PROMO_CODE
-gh workflow run login-finish.yml \
-  -f next_due_at='2026-09-06T16:17:00+09:00'
+gh workflow run login-finish.yml
 ```
 
 成功後：

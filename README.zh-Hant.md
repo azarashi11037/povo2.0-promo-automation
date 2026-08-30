@@ -13,8 +13,7 @@ GitHub Actions 推薦模式只需要使用者提供：
 
 1. povo2.0 登入電子郵件；
 2. 郵件中最新的 6 位驗證碼；
-3. 可重複使用的 promo code；
-4. 下一次執行時間。
+3. 可重複使用的 promo code。
 
 這些資料不會填入同一個公開表單。為避免電子郵件、驗證碼與兌換碼出現在 Actions 歷史中，必須透過 GitHub Repository Secrets 分兩個階段保存。初始化完成後，可刪除電子郵件、驗證碼及兌換碼 Secret，只長期保留加密金鑰 `POVO_BUNDLE_KEY`。
 
@@ -41,10 +40,10 @@ GitHub Actions 推薦模式只需要使用者提供：
 5. 立即建立：
    - `POVO_LOGIN_OTP`：最新郵件中的 6 位驗證碼；
    - `POVO_PROMO_CODE`：promo code。
-6. 在 15 分鐘內執行 **Finish povo2.0 email login**，輸入含時區的下一次執行時間，例如 `2026-09-06T16:17:00+09:00`。
+6. 在 15 分鐘內執行 **Finish povo2.0 login and redeem once**。執行此工作流程即表示明確確認首次兌換；確認成功後，系統會自動將下一次時間設為成功時刻加 7 天 1 分鐘，不需手動輸入日期。
 7. 確認倉庫出現 `state/session.enc` 後，刪除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 與 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
 
-若初始化後需要立即啟用一次，可手動執行 **povo2.0 session keeper** 並明確勾選 `redeem_now`。此開關只對本次手動執行有效；排程執行不會繞過 `next_due_at`。
+目前登入／帳戶檢查介面沒有經驗證且可靠的 promo 到期欄位。JWT 的到期時間只是短期登入權杖期限，不能視為方案到期時間。因此建議流程以首次兌換確認成功的時刻自動起算，不會猜測或誤讀到期時間。
 
 之後 **povo2.0 session keeper** 每天檢查四次。GitHub cron 可能延遲，無法保證秒級準時。完整網頁操作、GitHub CLI 指令、復原與金鑰輪替方式請參閱 [GitHub Actions 使用說明](docs/GITHUB_ACTIONS.zh-Hant.md)。
 
@@ -80,6 +79,7 @@ POVO_ENABLE_REDEMPTION=1
 - 介面未公開，App 更新後可能失效；
 - 帳戶同時存在多個 add-on 時可能回傳 `MULTIPLE_ADDONS_FOUND`，目前尚未解決；
 - GitHub 排程可能排隊或延遲；
+- 目前無法在登入後可靠讀取既有 promo 的到期時間；
 - 兩階段登入仍需要使用者在 15 分鐘內手動提供郵件驗證碼；
 - 本專案不是生產級或電信業者官方工具。
 

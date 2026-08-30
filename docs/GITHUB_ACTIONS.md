@@ -29,15 +29,11 @@ GitHub Actions 模式适合公开 Fork。仓库只保存认证加密的 `state/l
 - `POVO_LOGIN_OTP`：6 位验证码。
 - `POVO_PROMO_CODE`：需要按计划使用的 promo code。
 
-进入 **Actions → Finish povo2.0 email login → Run workflow**，输入带时区的下一次执行时间，例如：
-
-```text
-2026-09-06T16:17:00+09:00
-```
+进入 **Actions → Finish povo2.0 login and redeem once → Run workflow**。运行这个明确命名的工作流即表示确认提交一次首次兑换。
 
 验证码挑战有效期为 15 分钟。不要再次运行发码工作流后继续使用旧邮件；新发码会建立新的挑战。
 
-成功后，`state/login.enc` 会被 `state/session.enc` 替换。删除以下一次性 Secret：
+首次兑换确认成功后，系统以成功分钟为起点，自动把 `next_due_at` 设为 7 天 1 分钟后；无需手动输入首次执行时间。随后 `state/login.enc` 会被 `state/session.enc` 替换。删除以下一次性 Secret：
 
 - `POVO_LOGIN_EMAIL`
 - `POVO_LOGIN_OTP`
@@ -45,7 +41,7 @@ GitHub Actions 模式适合公开 Fork。仓库只保存认证加密的 `state/l
 
 只保留 `POVO_BUNDLE_KEY`。
 
-若初始化账户还需要立即兑换一次，请手动运行 **povo2.0 session keeper**，并明确勾选 `redeem_now`。这是单次确认开关；定时触发时始终为关闭状态。兑换确认成功后，下一次时间会设置为成功时刻加 7 天 1 分钟。
+登录后的账户检查目前没有提供经过验证、可靠的 promo 到期字段；JWT 到期时间只是短期登录令牌期限。因此本项目不会把 JWT 时间当成套餐到期时间，也不会猜测现有 promo 的期限。
 
 ## GitHub CLI 方式
 
@@ -62,8 +58,7 @@ gh workflow run login-start.yml
 ```bash
 gh secret set POVO_LOGIN_OTP
 gh secret set POVO_PROMO_CODE
-gh workflow run login-finish.yml \
-  -f next_due_at='2026-09-06T16:17:00+09:00'
+gh workflow run login-finish.yml
 ```
 
 确认登录工作流成功后：

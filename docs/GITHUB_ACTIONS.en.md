@@ -29,17 +29,13 @@ Use only the newest email and immediately create:
 - `POVO_LOGIN_OTP`: the six-digit OTP.
 - `POVO_PROMO_CODE`: the promo code to use on schedule.
 
-Run **Actions → Finish povo2.0 email login → Run workflow** and enter the next execution time with a timezone:
-
-```text
-2026-09-06T16:17:00+09:00
-```
+Run **Actions → Finish povo2.0 login and redeem once → Run workflow**. Running this explicitly named workflow confirms one first-redemption submission.
 
 The OTP challenge is valid for 15 minutes. If Start is run again, the old email must not be reused because a new challenge has been created.
 
-On success, `state/login.enc` is replaced by `state/session.enc`. Delete `POVO_LOGIN_EMAIL`, `POVO_LOGIN_OTP`, and `POVO_PROMO_CODE`; keep only `POVO_BUNDLE_KEY`.
+After the first redemption is confirmed successful, `next_due_at` is automatically set to 7 days and 1 minute after its success minute. No initial date entry is required. `state/login.enc` is then replaced by `state/session.enc`. Delete `POVO_LOGIN_EMAIL`, `POVO_LOGIN_OTP`, and `POVO_PROMO_CODE`; keep only `POVO_BUNDLE_KEY`.
 
-If the initialized account must redeem once immediately, manually run **povo2.0 session keeper** and explicitly enable `redeem_now`. This is a one-run confirmation switch and is always off for scheduled triggers. After a confirmed success, the next due time is set to 7 days and 1 minute after that success.
+The account check after login currently has no verified, reliable promo-expiration field. JWT expiry is only the short-lived login-token expiry. This project neither treats it as the plan expiry nor guesses the lifetime of an existing promo.
 
 ## GitHub CLI
 
@@ -56,8 +52,7 @@ After receiving the newest email:
 ```bash
 gh secret set POVO_LOGIN_OTP
 gh secret set POVO_PROMO_CODE
-gh workflow run login-finish.yml \
-  -f next_due_at='2026-09-06T16:17:00+09:00'
+gh workflow run login-finish.yml
 ```
 
 After a successful run:

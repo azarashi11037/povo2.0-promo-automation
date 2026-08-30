@@ -13,8 +13,7 @@ The recommended GitHub Actions flow needs only:
 
 1. the povo2.0 login email address;
 2. the latest six-digit OTP received by email;
-3. a reusable promo code; and
-4. the next scheduled execution time.
+3. a reusable promo code.
 
 These values are not entered together in a public form. To keep the email address, OTP, and promo code out of Actions history, they are stored as GitHub Repository Secrets in two stages. After initialization, the email, OTP, and promo-code secrets can be deleted; only `POVO_BUNDLE_KEY` must remain.
 
@@ -41,10 +40,10 @@ These values are not entered together in a public form. To keep the email addres
 5. Immediately create:
    - `POVO_LOGIN_OTP`: the six-digit code from the latest email.
    - `POVO_PROMO_CODE`: the promo code.
-6. Within 15 minutes, run **Finish povo2.0 email login** and enter the next execution time with a timezone, for example `2026-09-06T16:17:00+09:00`.
+6. Within 15 minutes, run **Finish povo2.0 login and redeem once**. Running this workflow explicitly confirms the first redemption. After confirmed success, the next due time is automatically set to 7 days and 1 minute after that success; no date entry is required.
 7. After `state/session.enc` appears, delete `POVO_LOGIN_EMAIL`, `POVO_LOGIN_OTP`, and `POVO_PROMO_CODE`. Keep `POVO_BUNDLE_KEY`.
 
-To activate once immediately after initialization, manually run **povo2.0 session keeper** and explicitly enable `redeem_now`. The switch applies only to that manual run; scheduled runs never bypass `next_due_at`.
+The current login/account-check endpoint has no verified, reliable promo-expiration field. JWT expiry is only the short-lived login-token expiry and must not be treated as the plan expiry. The recommended flow therefore starts from the confirmed first-redemption time instead of guessing or misreading an expiration date.
 
 The **povo2.0 session keeper** workflow then checks four times per day. GitHub cron can be delayed and is not suitable for second-level timing. See the [GitHub Actions guide](docs/GITHUB_ACTIONS.en.md) for detailed UI steps, GitHub CLI commands, recovery, and key rotation.
 
@@ -80,6 +79,7 @@ POVO_ENABLE_REDEMPTION=1
 - Undocumented APIs may stop working after an app update.
 - Accounts with multiple add-ons may return `MULTIPLE_ADDONS_FOUND`; this is unresolved.
 - GitHub scheduled jobs may queue or run late.
+- The expiration of an existing promo cannot currently be read reliably after login.
 - The user must still provide the email OTP manually within 15 minutes.
 - This is not a production-grade or carrier-supported tool.
 

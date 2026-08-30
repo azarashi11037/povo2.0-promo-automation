@@ -14,7 +14,6 @@ povo2.0 の promo code を指定時刻に処理するための、非公式かつ
 1. povo2.0 のログイン用メールアドレス
 2. 最新メールに記載された 6 桁の OTP
 3. 再利用可能な promo code
-4. 次回実行日時
 
 これらを一つの公開フォームへまとめて入力する方式ではありません。メールアドレス、OTP、コードを Actions 履歴に残さないため、GitHub Repository Secrets を使って二段階で設定します。初期化後はメール、OTP、コードの Secret を削除し、長期保存するのは暗号化キー `POVO_BUNDLE_KEY` だけです。
 
@@ -41,10 +40,10 @@ povo2.0 の promo code を指定時刻に処理するための、非公式かつ
 5. メール到着後、すぐに次を作成します。
    - `POVO_LOGIN_OTP`：最新メールの 6 桁 OTP。
    - `POVO_PROMO_CODE`：promo code。
-6. 15 分以内に **Finish povo2.0 email login** を実行し、タイムゾーン付きの次回日時（例：`2026-09-06T16:17:00+09:00`）を入力します。
+6. 15 分以内に **Finish povo2.0 login and redeem once** を実行します。この workflow の実行が初回交換の明示的な確認となり、成功時刻の 7 日 1 分後が次回時刻として自動設定されます。日時の手入力は不要です。
 7. `state/session.enc` が作成されたことを確認し、`POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP`、`POVO_PROMO_CODE` を削除します。`POVO_BUNDLE_KEY` は残します。
 
-初期化直後に 1 回だけ有効化する場合は、**povo2.0 session keeper** を手動実行し、`redeem_now` を明示的にオンにします。この設定はその手動実行だけに適用され、定期実行が `next_due_at` を無視することはありません。
+現在のログイン／アカウント確認 API には、検証済みで信頼できる promo の有効期限フィールドがありません。JWT の期限は短期ログイントークンの期限であり、プランの期限ではありません。そのため、推測した期限ではなく、確認済みの初回交換成功時刻を起点にします。
 
 以後、**povo2.0 session keeper** が 1 日 4 回確認します。GitHub cron は遅延することがあり、秒単位の正確な実行は保証できません。Web 画面での詳しい操作、GitHub CLI、復旧、キーのローテーションは [GitHub Actions ガイド](docs/GITHUB_ACTIONS.ja.md) を参照してください。
 
@@ -80,6 +79,7 @@ POVO_ENABLE_REDEMPTION=1
 - 非公開 API のため、アプリ更新後に動作しなくなる可能性があります。
 - 複数の add-on があるアカウントでは `MULTIPLE_ADDONS_FOUND` が返る場合があり、未解決です。
 - GitHub のスケジュール実行は待機または遅延する場合があります。
+- 現在、ログイン後に既存 promo の有効期限を確実に読み取ることはできません。
 - メール OTP は利用者が 15 分以内に手動で設定する必要があります。
 - 本プロジェクトは本番品質または通信事業者の公式ツールではありません。
 

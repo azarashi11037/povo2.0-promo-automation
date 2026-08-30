@@ -194,7 +194,7 @@ def finish_login(
     session_path: Path,
     otp_code: str,
     promo_code: str,
-    next_due_at: str,
+    next_due_at: str | None,
     bundle_key: str,
 ) -> None:
     if not re.fullmatch(r"\d{6}", otp_code):
@@ -226,12 +226,14 @@ def finish_login(
         code = _find(response, "code")
         raise RuntimeError(f"Email OTP login failed with HTTP {status}, code {code!r}.")
 
-    due = datetime.fromisoformat(next_due_at)
-    if due.tzinfo is None:
-        due = due.replace(tzinfo=JST)
-    due = due.astimezone(JST)
-    if due <= datetime.now(JST):
-        raise ValueError("next_due_at must be in the future.")
+    due = None
+    if next_due_at:
+        due = datetime.fromisoformat(next_due_at)
+        if due.tzinfo is None:
+            due = due.replace(tzinfo=JST)
+        due = due.astimezone(JST)
+        if due <= datetime.now(JST):
+            raise ValueError("next_due_at must be in the future.")
 
     data_dir.mkdir(parents=True, exist_ok=True)
     data_dir.chmod(0o700)
@@ -249,15 +251,22 @@ def finish_login(
     (data_dir / "code").write_text(promo_code + "\n", encoding="utf-8")
     state = {
         "version": 2,
-        "phase": "scheduled",
+        "phase": "scheduled" if due else "ready_for_first_redemption",
         "paused": False,
-        "next_due_at": due.replace(second=0, microsecond=0).isoformat(
-            timespec="minutes"
+        "next_due_at": (
+            due.replace(second=0, microsecond=0).isoformat(timespec="minutes")
+            if due
+            else None
         ),
         "last_success_at": None,
         "last_attempt_at": None,
         "last_result": "github_email_login",
-        "last_message": "Authorized email OTP login stored in an encrypted bundle.",
+        "last_message": (
+            "Authorized email OTP login stored; awaiting the explicitly confirmed "
+            "first redemption."
+            if due is None
+            else "Authorized email OTP login stored with an imported schedule."
+        ),
     }
     (data_dir / "state.json").write_text(
         json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -277,7 +286,10 @@ def main() -> int:
     finish.add_argument("--challenge", type=Path, required=True)
     finish.add_argument("--data-dir", type=Path, required=True)
     finish.add_argument("--output", type=Path, required=True)
-    finish.add_argument("--next-due-at", required=True)
+    finish.add_argument(
+        "--next-due-at",
+        help="optional recovery override; normal email login schedules after first success",
+    )
     args = parser.parse_args()
     bundle_key = _secret("POVO_BUNDLE_KEY")
     if args.command == "start":

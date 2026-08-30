@@ -75,7 +75,7 @@ class LoginSessionTests(unittest.TestCase):
                 session,
                 "123456",
                 "promo-code",
-                "2099-09-06T16:17:00+09:00",
+                None,
                 self.key,
             )
         encoded = session.read_bytes()
@@ -89,7 +89,47 @@ class LoginSessionTests(unittest.TestCase):
         )
         self.assertEqual(credentials.token, token)
         state = json.loads((restored / "state.json").read_text(encoding="utf-8"))
+        self.assertIsNone(state["next_due_at"])
+        self.assertFalse(state["paused"])
+        self.assertEqual(state["phase"], "ready_for_first_redemption")
+
+    @patch("tools.login_session._post")
+    def test_finish_accepts_an_optional_recovery_schedule(self, mocked_post):
+        mocked_post.return_value = (
+            200,
+            {"success": True, "result": {"auth_token": _jwt()}},
+        )
+        challenge_path = self.root / "scheduled-login.enc"
+        encrypt_challenge(
+            {
+                "email": "person@example.com",
+                "device_id": "device-secret",
+                "auth_id": "auth-secret",
+                "created_at": int(time.time()),
+            },
+            challenge_path,
+            self.key,
+        )
+        private = self.root / "scheduled-private"
+        session = self.root / "scheduled-session.enc"
+        with patch(
+            "tools.login_session.PovoClient.profile_probe",
+            return_value=(200, {"authenticated": True}),
+        ):
+            finish_login(
+                challenge_path,
+                private,
+                session,
+                "123456",
+                "promo-code",
+                "2099-09-06T16:17:00+09:00",
+                self.key,
+            )
+        restored = self.root / "scheduled-restored"
+        unpack(session, restored, self.key)
+        state = json.loads((restored / "state.json").read_text(encoding="utf-8"))
         self.assertEqual(state["next_due_at"], "2099-09-06T16:17+09:00")
+        self.assertEqual(state["phase"], "scheduled")
 
 
 if __name__ == "__main__":

@@ -251,7 +251,9 @@ def finish_login(
         "version": 2,
         "phase": "scheduled",
         "paused": False,
-        "next_due_at": due.isoformat(timespec="seconds"),
+        "next_due_at": due.replace(second=0, microsecond=0).isoformat(
+            timespec="minutes"
+        ),
         "last_success_at": None,
         "last_attempt_at": None,
         "last_result": "github_email_login",

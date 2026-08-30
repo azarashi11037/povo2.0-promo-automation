@@ -88,6 +88,8 @@ class LoginSessionTests(unittest.TestCase):
             restored / "credentials.xml", restored / "device.xml"
         )
         self.assertEqual(credentials.token, token)
+        state = json.loads((restored / "state.json").read_text(encoding="utf-8"))
+        self.assertEqual(state["next_due_at"], "2099-09-06T16:17+09:00")
 
 
 if __name__ == "__main__":

@@ -68,7 +68,11 @@ def main() -> int:
         "version": 2,
         "phase": "scheduled",
         "paused": due is None,
-        "next_due_at": due.isoformat(timespec="seconds") if due else None,
+        "next_due_at": (
+            due.replace(second=0, microsecond=0).isoformat(timespec="minutes")
+            if due
+            else None
+        ),
         "last_success_at": None,
         "last_attempt_at": None,
         "last_result": "initialized",

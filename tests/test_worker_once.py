@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,6 +10,13 @@ import povo_worker
 
 
 class RunOnceTests(unittest.TestCase):
+    def test_due_time_uses_minute_precision(self):
+        value = datetime.fromisoformat("2026-08-31T00:41:47+09:00")
+        self.assertEqual(
+            povo_worker.iso_minute(value + povo_worker.REDEMPTION_INTERVAL),
+            "2026-09-07T00:42+09:00",
+        )
+
     def test_not_due_refreshes_without_redeeming(self):
         with tempfile.TemporaryDirectory() as temporary, patch.object(
             povo_worker, "DATA_DIR", Path(temporary)

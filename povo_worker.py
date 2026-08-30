@@ -47,6 +47,12 @@ def iso(value: datetime | None = None) -> str:
     return (value or now_jst()).astimezone(JST).isoformat(timespec="seconds")
 
 
+def iso_minute(value: datetime) -> str:
+    return value.astimezone(JST).replace(second=0, microsecond=0).isoformat(
+        timespec="minutes"
+    )
+
+
 def parse_dt(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -111,6 +117,17 @@ def save_state(state: dict) -> None:
     state["updated_at"] = iso()
     with file_lock(STATE_LOCK_FILE):
         atomic_json(STATE_FILE, state)
+
+
+def normalize_due_precision(state: dict) -> dict:
+    due = parse_dt(state.get("next_due_at"))
+    if due is None:
+        return state
+    normalized = iso_minute(due)
+    if state.get("next_due_at") != normalized:
+        state["next_due_at"] = normalized
+        save_state(state)
+    return state
 
 
 def load_runtime() -> dict:
@@ -262,7 +279,7 @@ def redeem_once() -> int:
             completed = now_jst()
             state["phase"] = "scheduled"
             state["last_success_at"] = iso(completed)
-            state["next_due_at"] = iso(completed + REDEMPTION_INTERVAL)
+            state["next_due_at"] = iso_minute(completed + REDEMPTION_INTERVAL)
             state["submit_retry_count"] = 0
             state["last_result"] = "success_api"
             state["last_message"] = "Redemption succeeded through the official API."
@@ -315,7 +332,7 @@ def run_once(*, redeem_now: bool = False) -> int:
     if not refresh_session(force=True):
         log("Session refresh failed; no redemption was attempted.")
         return 2
-    state = load_state()
+    state = normalize_due_precision(load_state())
     if state.get("paused"):
         log("Scheduler is paused; session refresh completed.")
         return 0
@@ -356,7 +373,7 @@ def main() -> int:
             auth_ok = refresh_session()
             if not auth_ok:
                 next_auth_retry = int(time.time()) + AUTH_RETRY_SECONDS
-            state = load_state()
+            state = normalize_due_precision(load_state())
             save_runtime(
                 {
                     "worker_heartbeat_at": iso(),

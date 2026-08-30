@@ -265,7 +265,9 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("time_must_be_future")
                 with file_lock(STATE_LOCK_FILE):
                     state = read_json(STATE_FILE, {})
-                    state["next_due_at"] = parsed.isoformat(timespec="seconds")
+                    state["next_due_at"] = parsed.replace(
+                        second=0, microsecond=0
+                    ).isoformat(timespec="minutes")
                     state["updated_at"] = datetime.now(JST).isoformat(timespec="seconds")
                     atomic_json(STATE_FILE, state)
                 append_history("schedule_changed")

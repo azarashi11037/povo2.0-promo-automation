@@ -69,6 +69,46 @@ class RunOnceTests(unittest.TestCase):
             self.assertEqual(povo_worker.run_once(), 3)
             redeem.assert_called_once_with()
 
+    def test_scheduled_early_start_waits_then_redeems(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.object(
+            povo_worker, "DATA_DIR", Path(temporary)
+        ), patch.object(povo_worker, "recover_interrupted_submission"), patch.object(
+            povo_worker, "append_history"
+        ), patch.object(
+            povo_worker, "refresh_session", return_value=True
+        ), patch.object(
+            povo_worker, "load_state", return_value={"paused": False}
+        ), patch.object(
+            povo_worker, "due_now", return_value=False
+        ), patch.object(
+            povo_worker, "wait_for_due", return_value=True
+        ) as wait, patch.object(
+            povo_worker, "redeem_once", return_value=0
+        ) as redeem:
+            self.assertEqual(povo_worker.run_once(wait_until_due=True), 0)
+            wait.assert_called_once_with({"paused": False}, 900)
+            redeem.assert_called_once_with()
+
+    def test_scheduled_run_does_not_wait_when_due_is_far_away(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.object(
+            povo_worker, "DATA_DIR", Path(temporary)
+        ), patch.object(povo_worker, "recover_interrupted_submission"), patch.object(
+            povo_worker, "append_history"
+        ), patch.object(
+            povo_worker, "refresh_session", return_value=True
+        ), patch.object(
+            povo_worker, "load_state", return_value={"paused": False}
+        ), patch.object(
+            povo_worker, "due_now", return_value=False
+        ), patch.object(
+            povo_worker, "wait_for_due", return_value=False
+        ) as wait, patch.object(
+            povo_worker, "redeem_once"
+        ) as redeem:
+            self.assertEqual(povo_worker.run_once(wait_until_due=True), 0)
+            wait.assert_called_once_with({"paused": False}, 900)
+            redeem.assert_not_called()
+
     def test_refresh_failure_never_redeems(self):
         with tempfile.TemporaryDirectory() as temporary, patch.object(
             povo_worker, "DATA_DIR", Path(temporary)

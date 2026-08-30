@@ -2,8 +2,10 @@ name: povo2.0 session keeper
 
 on:
   schedule:
-    # Four checks per day. GitHub schedules may start late during busy periods.
+    # BEGIN MANAGED PRECISE SCHEDULE
+    # Bootstrap checks until the encrypted account state writes its exact window.
     - cron: "17 1,7,13,19 * * *"
+    # END MANAGED PRECISE SCHEDULE
   workflow_dispatch:
     inputs:
       redeem_now:
@@ -52,9 +54,19 @@ jobs:
           set -euo pipefail
           if [[ "$POVO_CONFIRM_REDEEM_NOW" == "1" ]]; then
             python povo_worker.py --redeem-now
+          elif [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+            python povo_worker.py --once --wait-until-due --max-wait-seconds 900
           else
             python povo_worker.py --once
           fi
+      - name: Align the next precise trigger window
+        if: always() && steps.decrypt.outcome == 'success'
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
+        run: |
+          python tools/update_workflow_schedule.py \
+            --state "$POVO_DATA_DIR/state.json" \
+            --workflow .github/workflows/povo.yml
       - name: Re-encrypt updated session
         id: encrypt
         if: always() && steps.decrypt.outcome == 'success'
@@ -71,7 +83,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add --force state/session.enc
+          git add --force state/session.enc .github/workflows/povo.yml
           if ! git diff --cached --quiet; then
             git commit -m "Refresh encrypted povo2.0 session state"
             git push

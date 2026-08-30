@@ -35,6 +35,7 @@ LOOP_SECONDS = 15
 NORMAL_REFRESH_SECONDS = 300
 AUTH_RETRY_SECONDS = 60
 MAX_HISTORY_BYTES = 1_000_000
+DEFAULT_EARLY_WAIT_SECONDS = 15 * 60
 
 running = True
 
@@ -310,6 +311,27 @@ def due_now(state: dict) -> bool:
     return bool(due and now_jst() >= due)
 
 
+def wait_for_due(state: dict, max_wait_seconds: int) -> bool:
+    """Wait only when a scheduled runner started shortly before the due minute."""
+    due = parse_dt(state.get("next_due_at"))
+    if due is None:
+        return False
+    remaining = (due - now_jst()).total_seconds()
+    if remaining <= 0:
+        return True
+    if remaining > max_wait_seconds:
+        return False
+    log(
+        f"Runner started {int(remaining)} seconds before the due minute; "
+        "waiting with the refreshed session ready."
+    )
+    while remaining > 0:
+        time.sleep(min(remaining, 5))
+        remaining = (due - now_jst()).total_seconds()
+    log("The due minute has been reached; starting the single-submit path.")
+    return True
+
+
 def handle_signal(_signum, _frame) -> None:
     global running
     running = False
@@ -324,7 +346,12 @@ def recover_interrupted_submission() -> None:
         save_state(state)
 
 
-def run_once(*, redeem_now: bool = False) -> int:
+def run_once(
+    *,
+    redeem_now: bool = False,
+    wait_until_due: bool = False,
+    max_wait_seconds: int = DEFAULT_EARLY_WAIT_SECONDS,
+) -> int:
     """Refresh the session and execute at most one authorized redemption."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     recover_interrupted_submission()
@@ -337,8 +364,9 @@ def run_once(*, redeem_now: bool = False) -> int:
         log("Scheduler is paused; session refresh completed.")
         return 0
     if not redeem_now and not due_now(state):
-        log("Redemption is not due; session refresh completed.")
-        return 0
+        if not wait_until_due or not wait_for_due(state, max_wait_seconds):
+            log("Redemption is not due; session refresh completed.")
+            return 0
     if redeem_now:
         log("A manually confirmed immediate redemption was requested.")
     return redeem_once()
@@ -354,12 +382,29 @@ def main() -> int:
         action="store_true",
         help="immediately redeem once; requires POVO_CONFIRM_REDEEM_NOW=1",
     )
+    parser.add_argument(
+        "--wait-until-due",
+        action="store_true",
+        help="wait when a scheduled runner starts shortly before next_due_at",
+    )
+    parser.add_argument(
+        "--max-wait-seconds",
+        type=int,
+        default=DEFAULT_EARLY_WAIT_SECONDS,
+        help="maximum early-start wait; default: 900 seconds",
+    )
     args = parser.parse_args()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if args.max_wait_seconds < 0:
+        parser.error("--max-wait-seconds must not be negative")
     if args.redeem_now and os.environ.get("POVO_CONFIRM_REDEEM_NOW") != "1":
         parser.error("--redeem-now requires POVO_CONFIRM_REDEEM_NOW=1")
     if args.once or args.redeem_now:
-        return run_once(redeem_now=args.redeem_now)
+        return run_once(
+            redeem_now=args.redeem_now,
+            wait_until_due=args.wait_until_due,
+            max_wait_seconds=args.max_wait_seconds,
+        )
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 

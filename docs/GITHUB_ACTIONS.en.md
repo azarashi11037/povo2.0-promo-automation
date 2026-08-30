@@ -67,15 +67,16 @@ Use `gh run list` and `gh run watch` to inspect run status. Logs should contain 
 
 ## Scheduled operation
 
-By default, **povo2.0 session keeper** checks at `01:17`, `07:17`, `13:17`, and `19:17` UTC, corresponding to `10:17`, `16:17`, `22:17`, and `04:17` the next day in Japan. Each run:
+After each confirmed redemption, **povo2.0 session keeper** rewrites the next precise cron window from the new `next_due_at`:
 
-1. decrypts the session inside an ephemeral runner;
-2. refreshes the session;
-3. submits at most once only when `next_due_at` has passed and the schedule is not paused;
-4. re-encrypts and commits updated state; and
-5. destroys plaintext with the runner.
+1. start the primary runner 10 minutes before the target minute;
+2. decrypt and refresh the session in the ephemeral runner;
+3. wait in-process only when the target is within 15 minutes, then submit at most once after the target minute arrives;
+4. provide fallback entries 5, 15, and 30 minutes after the target;
+5. retain one daily safety check if all precise entries are delayed or dropped; and
+6. commit the encrypted state and next cron window together, then destroy plaintext.
 
-GitHub cron may queue or run late. The theoretical maximum check interval is about six hours, so this is not appropriate for second-level timing. An uncertain result changes the state to `unknown` and blocks automatic retries.
+Every entry checks `next_due_at`, pause state, and submission state, so stale or fallback entries cannot duplicate a redemption. GitHub cron may still queue, run late, or be dropped and cannot guarantee second-level timing. An uncertain result changes the state to `unknown` and blocks automatic retries. The precise cron is written to public `.github/workflows/povo.yml`, so a public fork exposes the next target date and minute.
 
 ## Stored data
 

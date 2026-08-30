@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import fcntl
 import json
 import os
@@ -297,17 +298,46 @@ def handle_signal(_signum, _frame) -> None:
     running = False
 
 
-def main() -> int:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    signal.signal(signal.SIGTERM, handle_signal)
-    signal.signal(signal.SIGINT, handle_signal)
-
+def recover_interrupted_submission() -> None:
     state = load_state()
     if state.get("phase") == "submitting":
         state["phase"] = "unknown"
         state["last_result"] = "unknown_after_restart"
         state["last_message"] = "Worker restarted during an API submission."
         save_state(state)
+
+
+def run_once() -> int:
+    """Refresh the session and execute at most one due redemption."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    recover_interrupted_submission()
+    append_history("github_run_started")
+    if not refresh_session(force=True):
+        log("Session refresh failed; no redemption was attempted.")
+        return 2
+    state = load_state()
+    if state.get("paused"):
+        log("Scheduler is paused; session refresh completed.")
+        return 0
+    if not due_now(state):
+        log("Redemption is not due; session refresh completed.")
+        return 0
+    return redeem_once()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--once", action="store_true", help="refresh once and execute at most one due run"
+    )
+    args = parser.parse_args()
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if args.once:
+        return run_once()
+    signal.signal(signal.SIGTERM, handle_signal)
+    signal.signal(signal.SIGINT, handle_signal)
+
+    recover_interrupted_submission()
 
     append_history("worker_started")
     log("povo worker started.")

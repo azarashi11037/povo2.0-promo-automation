@@ -1,0 +1,63 @@
+name: povo session keeper
+
+on:
+  schedule:
+    # Four checks per day. GitHub schedules may start late during busy periods.
+    - cron: "17 1,7,13,19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: povo-session-state
+  cancel-in-progress: false
+
+jobs:
+  keep-session-and-run-if-due:
+    runs-on: ubuntu-latest
+    env:
+      POVO_BUNDLE_KEY: ${{ secrets.POVO_BUNDLE_KEY }}
+      POVO_DATA_DIR: ${{ runner.temp }}/povo-data
+      POVO_ENABLE_REDEMPTION: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Decrypt private session into the ephemeral runner
+        id: decrypt
+        run: |
+          set -euo pipefail
+          test -s state/session.enc
+          python tools/session_bundle.py unpack \
+            --input state/session.enc \
+            --data-dir "$POVO_DATA_DIR"
+      - name: Refresh once and redeem only when due
+        id: execute
+        continue-on-error: true
+        run: python povo_worker.py --once
+      - name: Re-encrypt updated session
+        id: encrypt
+        if: always() && steps.decrypt.outcome == 'success'
+        run: |
+          set -euo pipefail
+          python tools/session_bundle.py pack \
+            --data-dir "$POVO_DATA_DIR" \
+            --output state/session.enc
+      - name: Persist ciphertext only
+        if: always() && steps.encrypt.outcome == 'success'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --force state/session.enc
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh encrypted povo session state"
+            git push
+          fi
+      - name: Preserve execution failure status
+        if: always() && steps.execute.outcome == 'failure'
+        run: exit 1

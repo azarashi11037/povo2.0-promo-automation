@@ -12,6 +12,7 @@
 - 响应日志采用字段白名单，不记录兑换码、会话令牌、设备 ID 或用户 ID。
 - 已知限制：账户同时存在多个 add-on 时，服务端可能返回 `MULTIPLE_ADDONS_FOUND`。该场景尚未解决，不能视为生产级工具。
 - 默认 `POVO_ENABLE_REDEMPTION=0`，不会提交兑换请求。
+- 可选 GitHub Actions 模式只提交认证加密的会话密文，标准 runner 内临时解密。
 
 ## 安全设计
 
@@ -69,6 +70,12 @@ docker compose down
 ```
 
 升级或修改前，先备份整个 `data/`。不要把 `data/`、`.env`、XML、兑换码或日志加入 Git。
+
+## 公开 Fork / GitHub Actions
+
+可以采用类似签到项目的方式，把解密钥匙放在 GitHub Repository Secrets，把加密后的会话状态放在公开仓库。完整设置、Secret 清单、轮换和故障恢复见 [GitHub Actions 模式](docs/GITHUB_ACTIONS.md)。
+
+这不会把邮箱登录自动变成可用接口。当前 GitHub 模式只接受本人已合法持有的会话文件；尚未验证的邮箱 OTP 直登流程不会被猜测或公开。
 
 ## 测试
 

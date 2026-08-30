@@ -17,3 +17,5 @@ history.jsonl
 code
 *.lock
 *.log
+/state/*
+!/state/.gitkeep

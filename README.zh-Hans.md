@@ -45,7 +45,7 @@ GitHub Actions 推荐模式只需要用户提供：
 
 当前登录/账户检查接口没有已验证可靠的 promo 到期字段。JWT 的过期时间只是短期登录令牌期限，不能当作套餐到期时间。因此推荐流程以首次兑换确认成功的时刻自动起算，而不会猜测或误读到期时间。
 
-之后 **povo2.0 session keeper** 会自动把下次目标写入工作流：提前 10 分钟启动并刷新会话，在 Runner 内等待到目标分钟，再最多提交一次；目标后 5、15、30 分钟设有补偿入口，另有每日安全检查。GitHub cron 仍可能延迟或丢弃任务，不能保证秒级执行。完整说明见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
+之后 **povo2.0 session keeper** 每小时在非整点检查一次。只有加密的下次目标进入 65 分钟窗口时才刷新会话并留在 Runner 内等待，到目标分钟后最多提交一次；其余检查不访问 povo API，也不提交文件。GitHub cron 仍可能延迟或丢弃任务，不能保证秒级执行。完整说明见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
 
 ## Docker 自托管
 
@@ -79,7 +79,6 @@ POVO_ENABLE_REDEMPTION=1
 - 接口未公开，App 更新后可能失效；
 - 账户同时存在多个 add-on 时可能返回 `MULTIPLE_ADDONS_FOUND`，目前尚未解决；
 - GitHub 定时任务可能排队或延迟；
-- 精确 cron 位于公开工作流中，因此公开 Fork 会显示下一次目标日期和分钟；
 - 当前无法在登录后可靠读取现有 promo 的到期时间；
 - GitHub 两阶段工作流仍需要用户在 15 分钟内手动提供邮件验证码；
 - 本项目不能视为生产级或运营商官方工具。

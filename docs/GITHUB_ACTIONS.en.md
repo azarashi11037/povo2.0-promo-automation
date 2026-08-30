@@ -67,16 +67,16 @@ Use `gh run list` and `gh run watch` to inspect run status. Logs should contain 
 
 ## Scheduled operation
 
-After each confirmed redemption, **povo2.0 session keeper** rewrites the next precise cron window from the new `next_due_at`:
+**povo2.0 session keeper** checks hourly at minute 32 UTC, away from the top-of-hour load spike:
 
-1. start the primary runner 10 minutes before the target minute;
-2. decrypt and refresh the session in the ephemeral runner;
-3. wait in-process only when the target is within 15 minutes, then submit at most once after the target minute arrives;
-4. provide fallback entries 5, 15, and 30 minutes after the target;
-5. retain one daily safety check if all precise entries are delayed or dropped; and
-6. commit the encrypted state and next cron window together, then destroy plaintext.
+1. decrypt state in the ephemeral runner without calling the povo API;
+2. exit immediately when `next_due_at` is more than 65 minutes away, without refreshing or committing;
+3. when the target enters the 65-minute window, refresh and wait inside the runner;
+4. after the target minute arrives, use the single-submit path and refresh again immediately before submission;
+5. re-encrypt and commit only when credentials or schedule state actually changed; and
+6. if one hourly entry is delayed or dropped, the next entry performs a late fallback.
 
-Every entry checks `next_due_at`, pause state, and submission state, so stale or fallback entries cannot duplicate a redemption. GitHub cron may still queue, run late, or be dropped and cannot guarantee second-level timing. An uncertain result changes the state to `unknown` and blocks automatic retries. The precise cron is written to public `.github/workflows/povo.yml`, so a public fork exposes the next target date and minute.
+For example, when the target minute is `:42`, the hourly `:32` entry prepares about 10 minutes early. As the 7-day-and-1-minute rule shifts the target minute, the lead time varies from 0 to 60 minutes, while submission still waits for the target minute. Every entry checks `next_due_at`, pause state, and submission state, preventing duplicates. GitHub cron may still queue, run late, or be dropped and cannot guarantee second-level timing. An uncertain result changes the state to `unknown` and blocks automatic retries.
 
 ## Stored data
 

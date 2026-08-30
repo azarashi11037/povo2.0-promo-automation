@@ -49,7 +49,7 @@ GitHub Actions 推荐模式只需要用户提供：
 
 当前登录/账户检查接口没有已验证可靠的 promo 到期字段。JWT 的过期时间只是短期登录令牌期限，不能当作套餐到期时间。因此推荐流程以首次兑换确认成功的时刻自动起算，而不会猜测或误读到期时间。
 
-之后 **povo2.0 session keeper** 会自动把下次目标写入工作流：提前 10 分钟启动并刷新会话，在 Runner 内等待到目标分钟，再最多提交一次；目标后 5、15、30 分钟设有补偿入口，另有每日安全检查。GitHub cron 仍可能延迟或丢弃任务，不能保证秒级执行。完整说明见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
+之后 **povo2.0 session keeper** 每小时在非整点检查一次。只有加密的下次目标进入 65 分钟窗口时才刷新会话并留在 Runner 内等待，到目标分钟后最多提交一次；其余检查不访问 povo API，也不提交文件。GitHub cron 仍可能延迟或丢弃任务，不能保证秒级执行。完整说明见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
 
 ## Docker 自托管
 
@@ -83,7 +83,6 @@ POVO_ENABLE_REDEMPTION=1
 - 接口未公开，App 更新后可能失效；
 - 账户同时存在多个 add-on 时可能返回 `MULTIPLE_ADDONS_FOUND`，目前尚未解决；
 - GitHub 定时任务可能排队或延迟；
-- 精确 cron 位于公开工作流中，因此公开 Fork 会显示下一次目标日期和分钟；
 - 当前无法在登录后可靠读取现有 promo 的到期时间；
 - GitHub 两阶段工作流仍需要用户在 15 分钟内手动提供邮件验证码；
 - 本项目不能视为生产级或运营商官方工具。
@@ -155,7 +154,7 @@ GitHub Actions 推薦模式只需要使用者提供：
 
 目前登入／帳戶檢查介面沒有經驗證且可靠的 promo 到期欄位。JWT 的到期時間只是短期登入權杖期限，不能視為方案到期時間。因此建議流程以首次兌換確認成功的時刻自動起算，不會猜測或誤讀到期時間。
 
-之後 **povo2.0 session keeper** 會自動把下一次目標寫入工作流程：提前 10 分鐘啟動並更新工作階段，在 Runner 內等待到目標分鐘，再最多提交一次；目標後 5、15、30 分鐘設有補償入口，另有每日安全檢查。GitHub cron 仍可能延遲或遺失任務，無法保證秒級準時。完整說明請參閱 [GitHub Actions 使用說明](docs/GITHUB_ACTIONS.zh-Hant.md)。
+之後 **povo2.0 session keeper** 每小時在非整點檢查一次。只有加密的下一次目標進入 65 分鐘視窗時才更新工作階段並留在 Runner 內等待，到目標分鐘後最多提交一次；其餘檢查不存取 povo API，也不提交檔案。GitHub cron 仍可能延遲或遺失任務，無法保證秒級準時。完整說明請參閱 [GitHub Actions 使用說明](docs/GITHUB_ACTIONS.zh-Hant.md)。
 
 ## Docker 自行託管
 
@@ -189,7 +188,6 @@ POVO_ENABLE_REDEMPTION=1
 - 介面未公開，App 更新後可能失效；
 - 帳戶同時存在多個 add-on 時可能回傳 `MULTIPLE_ADDONS_FOUND`，目前尚未解決；
 - GitHub 排程可能排隊或延遲；
-- 精確 cron 位於公開工作流程中，因此公開 Fork 會顯示下一次目標日期與分鐘；
 - 目前無法在登入後可靠讀取既有 promo 的到期時間；
 - 兩階段登入仍需要使用者在 15 分鐘內手動提供郵件驗證碼；
 - 本專案不是生產級或電信業者官方工具。
@@ -253,7 +251,7 @@ povo2.0 の promo code を指定時刻に処理するための、非公式かつ
 
 現在のログイン／アカウント確認 API には、検証済みで信頼できる promo の有効期限フィールドがありません。JWT の期限は短期ログイントークンの期限であり、プランの期限ではありません。そのため、推測した期限ではなく、確認済みの初回交換成功時刻を起点にします。
 
-以後、**povo2.0 session keeper** が次回目標を workflow へ自動反映します。10 分前に起動してセッションを更新し、Runner 内で目標分まで待ってから最大 1 回だけ送信します。目標の 5、15、30 分後にフォールバックがあり、日次の安全確認も残します。GitHub cron は遅延または欠落する可能性があり、秒単位の正確さは保証できません。詳細は [GitHub Actions ガイド](docs/GITHUB_ACTIONS.ja.md) を参照してください。
+以後、**povo2.0 session keeper** が毎時、時刻の先頭を避けて確認します。暗号化された次回目標が 65 分以内に入った場合だけセッションを更新して Runner 内で待機し、目標分に達してから最大 1 回送信します。それ以外の確認は povo API に接続せず、ファイルもコミットしません。GitHub cron は遅延または欠落する可能性があり、秒単位の正確さは保証できません。詳細は [GitHub Actions ガイド](docs/GITHUB_ACTIONS.ja.md) を参照してください。
 
 ## Docker セルフホスト
 
@@ -287,7 +285,6 @@ POVO_ENABLE_REDEMPTION=1
 - 非公開 API のため、アプリ更新後に動作しなくなる可能性があります。
 - 複数の add-on があるアカウントでは `MULTIPLE_ADDONS_FOUND` が返る場合があり、未解決です。
 - GitHub のスケジュール実行は待機または遅延する場合があります。
-- 正確な cron は公開 workflow に書かれるため、公開 Fork では次回の目標日と分が表示されます。
 - 現在、ログイン後に既存 promo の有効期限を確実に読み取ることはできません。
 - メール OTP は利用者が 15 分以内に手動で設定する必要があります。
 - 本プロジェクトは本番品質または通信事業者の公式ツールではありません。
@@ -351,7 +348,7 @@ These values are not entered together in a public form. To keep the email addres
 
 The current login/account-check endpoint has no verified, reliable promo-expiration field. JWT expiry is only the short-lived login-token expiry and must not be treated as the plan expiry. The recommended flow therefore starts from the confirmed first-redemption time instead of guessing or misreading an expiration date.
 
-The **povo2.0 session keeper** then writes the next target into its workflow: it starts 10 minutes early, refreshes the session, waits inside the runner until the target minute, and submits at most once. Fallback entries run 5, 15, and 30 minutes after the target, with a daily safety check as well. GitHub cron can still be delayed or dropped and cannot guarantee second-level timing. See the [GitHub Actions guide](docs/GITHUB_ACTIONS.en.md).
+The **povo2.0 session keeper** then checks hourly away from the top of the hour. Only when the encrypted target is within 65 minutes does it refresh the session and wait inside the runner, submitting at most once after the target minute arrives. Other checks neither call the povo API nor commit files. GitHub cron can still be delayed or dropped and cannot guarantee second-level timing. See the [GitHub Actions guide](docs/GITHUB_ACTIONS.en.md).
 
 ## Docker self-hosting
 
@@ -385,7 +382,6 @@ POVO_ENABLE_REDEMPTION=1
 - Undocumented APIs may stop working after an app update.
 - Accounts with multiple add-ons may return `MULTIPLE_ADDONS_FOUND`; this is unresolved.
 - GitHub scheduled jobs may queue or run late.
-- The precise cron is stored in the public workflow, so a public fork exposes the next target date and minute.
 - The expiration of an existing promo cannot currently be read reliably after login.
 - The user must still provide the email OTP manually within 15 minutes.
 - This is not a production-grade or carrier-supported tool.

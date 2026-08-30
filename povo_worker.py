@@ -311,6 +311,11 @@ def due_now(state: dict) -> bool:
     return bool(due and now_jst() >= due)
 
 
+def seconds_until_due(state: dict) -> float | None:
+    due = parse_dt(state.get("next_due_at"))
+    return None if due is None else (due - now_jst()).total_seconds()
+
+
 def wait_for_due(state: dict, max_wait_seconds: int) -> bool:
     """Wait only when a scheduled runner started shortly before the due minute."""
     due = parse_dt(state.get("next_due_at"))
@@ -356,14 +361,20 @@ def run_once(
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     recover_interrupted_submission()
     append_history("github_run_started")
+    state = normalize_due_precision(load_state())
+    is_due = due_now(state)
+    if wait_until_due and not is_due:
+        remaining = seconds_until_due(state)
+        if remaining is None or remaining > max_wait_seconds:
+            log("Redemption is outside the scheduled look-ahead window; skipped.")
+            return 0
     if not refresh_session(force=True):
         log("Session refresh failed; no redemption was attempted.")
         return 2
-    state = normalize_due_precision(load_state())
     if state.get("paused"):
         log("Scheduler is paused; session refresh completed.")
         return 0
-    if not redeem_now and not due_now(state):
+    if not redeem_now and not is_due:
         if not wait_until_due or not wait_for_due(state, max_wait_seconds):
             log("Redemption is not due; session refresh completed.")
             return 0

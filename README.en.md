@@ -45,7 +45,7 @@ These values are not entered together in a public form. To keep the email addres
 
 The current login/account-check endpoint has no verified, reliable promo-expiration field. JWT expiry is only the short-lived login-token expiry and must not be treated as the plan expiry. The recommended flow therefore starts from the confirmed first-redemption time instead of guessing or misreading an expiration date.
 
-The **povo2.0 session keeper** then writes the next target into its workflow: it starts 10 minutes early, refreshes the session, waits inside the runner until the target minute, and submits at most once. Fallback entries run 5, 15, and 30 minutes after the target, with a daily safety check as well. GitHub cron can still be delayed or dropped and cannot guarantee second-level timing. See the [GitHub Actions guide](docs/GITHUB_ACTIONS.en.md).
+The **povo2.0 session keeper** then checks hourly away from the top of the hour. Only when the encrypted target is within 65 minutes does it refresh the session and wait inside the runner, submitting at most once after the target minute arrives. Other checks neither call the povo API nor commit files. GitHub cron can still be delayed or dropped and cannot guarantee second-level timing. See the [GitHub Actions guide](docs/GITHUB_ACTIONS.en.md).
 
 ## Docker self-hosting
 
@@ -79,7 +79,6 @@ POVO_ENABLE_REDEMPTION=1
 - Undocumented APIs may stop working after an app update.
 - Accounts with multiple add-ons may return `MULTIPLE_ADDONS_FOUND`; this is unresolved.
 - GitHub scheduled jobs may queue or run late.
-- The precise cron is stored in the public workflow, so a public fork exposes the next target date and minute.
 - The expiration of an existing promo cannot currently be read reliably after login.
 - The user must still provide the email OTP manually within 15 minutes.
 - This is not a production-grade or carrier-supported tool.

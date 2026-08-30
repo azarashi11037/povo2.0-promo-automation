@@ -81,6 +81,8 @@ class RunOnceTests(unittest.TestCase):
         ), patch.object(
             povo_worker, "due_now", return_value=False
         ), patch.object(
+            povo_worker, "seconds_until_due", return_value=600
+        ), patch.object(
             povo_worker, "wait_for_due", return_value=True
         ) as wait, patch.object(
             povo_worker, "redeem_once", return_value=0
@@ -95,18 +97,23 @@ class RunOnceTests(unittest.TestCase):
         ), patch.object(povo_worker, "recover_interrupted_submission"), patch.object(
             povo_worker, "append_history"
         ), patch.object(
-            povo_worker, "refresh_session", return_value=True
-        ), patch.object(
             povo_worker, "load_state", return_value={"paused": False}
         ), patch.object(
             povo_worker, "due_now", return_value=False
         ), patch.object(
-            povo_worker, "wait_for_due", return_value=False
+            povo_worker, "seconds_until_due", return_value=3600
+        ), patch.object(
+            povo_worker, "refresh_session"
+        ) as refresh, patch.object(
+            povo_worker, "wait_for_due"
         ) as wait, patch.object(
             povo_worker, "redeem_once"
         ) as redeem:
-            self.assertEqual(povo_worker.run_once(wait_until_due=True), 0)
-            wait.assert_called_once_with({"paused": False}, 900)
+            self.assertEqual(
+                povo_worker.run_once(wait_until_due=True, max_wait_seconds=900), 0
+            )
+            refresh.assert_not_called()
+            wait.assert_not_called()
             redeem.assert_not_called()
 
     def test_refresh_failure_never_redeems(self):

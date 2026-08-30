@@ -1,37 +1,54 @@
-# povo promo automation (experimental)
+# povo promo automation（实验性）
 
-一个非官方、自托管的 povo promo code 定时执行器，包含单次提交 Worker 和局域网管理面板。
+简体中文 | [繁體中文](README.zh-Hant.md) | [日本語](README.ja.md) | [English](README.en.md)
+
+一个非官方、自托管的 povo promo code 定时执行器。支持通过 GitHub Actions 完成邮箱验证码登录、加密保存会话并按计划执行，也可以部署为带局域网管理面板的 Docker 服务。
 
 > [!WARNING]
-> 本项目使用未公开、可能随 App 更新而变化的后端接口，不受 povo/KDDI 支持或认可。请只操作你本人有权管理的账户，并自行确认服务条款。项目不提供绕过证书固定、Root、越权读取 App 数据或获取他人会话的方式。
+> 本项目使用未公开、可能随 povo App 更新而变化的接口，不受 povo/KDDI 支持或认可。请只操作本人有权管理的账户，并自行确认适用条款。项目不绕过验证码、TLS 校验、Root 限制或访问控制。
 
-## 当前状态
+## 用户需要提供什么
 
-- 会话刷新和只读认证检查可用。
-- 每个到期事件最多提交一次；结果不明确时进入 `unknown` 并停止自动重试。
-- 响应日志采用字段白名单，不记录兑换码、会话令牌、设备 ID 或用户 ID。
-- 已知限制：账户同时存在多个 add-on 时，服务端可能返回 `MULTIPLE_ADDONS_FOUND`。该场景尚未解决，不能视为生产级工具。
-- 默认 `POVO_ENABLE_REDEMPTION=0`，不会提交兑换请求。
-- 可选 GitHub Actions 模式只提交认证加密的会话密文，标准 runner 内临时解密。
-- GitHub Actions 可通过两阶段邮箱验证码登录创建加密会话，不需要常驻 Android 虚拟机。
+GitHub Actions 推荐模式只需要用户提供：
 
-## 安全设计
+1. povo 登录邮箱；
+2. 邮件收到的最新 6 位验证码；
+3. 可重复使用的 promo code；
+4. 下一次执行时间。
 
-- Dashboard 默认只绑定 `127.0.0.1`，不要直接暴露到公网。
-- 容器使用只读根文件系统、`cap_drop: ALL`、`no-new-privileges` 和 128 MiB 内存限制。
-- 敏感文件只保存在挂载的 `data/`，并被 `.gitignore` 与 `.dockerignore` 排除。
-- Dashboard 密码只保存 PBKDF2 哈希。
-- 没有“立即兑换”网页按钮；修改时间不会立刻触发提交。
+这些内容不是填在同一个公开表单中。为了避免邮箱、验证码和兑换码出现在 Actions 历史里，它们必须通过 GitHub Repository Secrets 分两步保存。初始化完成后，可以删除邮箱、验证码和兑换码 Secret，只长期保留加密钥匙 `POVO_BUNDLE_KEY`。
 
-## 准备
+## 已实现
 
-需要 Docker Engine 和 Docker Compose。项目不会替你提取账户材料；你必须已经通过合法、获授权的方式持有与自己账户匹配的：
+- 无需常驻 Android 虚拟机的两阶段邮箱验证码登录；
+- AES-256-GCM 加密的会话、设备、兑换码和调度状态；
+- GitHub-hosted runner 中临时解密，任务结束后销毁明文；
+- 定期刷新会话，仅在到期后最多提交一次；
+- 结果不明确时进入 `unknown` 并停止自动重试；
+- 白名单式脱敏日志，不输出令牌、设备 ID、用户 ID 或兑换码；
+- 备用的 Android 会话文件导入方式；
+- Docker Worker 与默认仅绑定 `127.0.0.1` 的管理面板；
+- CI 中的语法检查、单元测试、Compose 校验和 Docker 构建。
 
-- `credentials.xml`
-- `device.xml`
-- 可重复使用的 promo code
+## GitHub Actions 快速开始
 
-不要把这些文件发送给他人或提交到 Git。
+1. Fork 本仓库。
+2. 在 **Settings → Actions → General → Workflow permissions** 中允许 Actions 读写仓库内容。
+3. 在 **Settings → Secrets and variables → Actions** 中建立：
+   - `POVO_BUNDLE_KEY`：至少 20 字符，建议随机生成；
+   - `POVO_LOGIN_EMAIL`：本人的 povo 登录邮箱。
+4. 运行 **Start povo email login**，等待验证码邮件。
+5. 立即建立：
+   - `POVO_LOGIN_OTP`：最新邮件中的 6 位验证码；
+   - `POVO_PROMO_CODE`：promo code。
+6. 在 15 分钟内运行 **Finish povo email login**，填写带时区的下一次执行时间，例如 `2026-09-06T16:17:00+09:00`。
+7. 确认仓库出现 `state/session.enc` 后，删除 `POVO_LOGIN_EMAIL`、`POVO_LOGIN_OTP` 和 `POVO_PROMO_CODE`，只保留 `POVO_BUNDLE_KEY`。
+
+之后 **povo session keeper** 会每天检查四次。GitHub cron 可能延迟，不能保证秒级执行。完整的网页操作、GitHub CLI 命令、恢复与密钥轮换方法见 [GitHub Actions 使用说明](docs/GITHUB_ACTIONS.md)。
+
+## Docker 自托管
+
+Docker 模式适合希望在自己服务器上运行 Worker 和局域网 WebUI 的用户。它需要已经合法取得、与本人账户匹配的 `credentials.xml` 和 `device.xml`。
 
 ```bash
 cp .env.example .env
@@ -42,41 +59,27 @@ chmod 600 ./data/*
 docker compose up -d --build
 ```
 
-打开 `http://127.0.0.1:17820/`，先执行“认证检查”。Linux 主机如使用不同 UID，需要确保容器 UID 1000 可写 `data/`。
-
-## 启用提交
-
-只有在只读认证检查正常、调度时间正确且你理解风险后，才把 `.env` 改为：
+打开 `http://127.0.0.1:17820/`，先执行只读认证检查。默认 `POVO_ENABLE_REDEMPTION=0`；确认会话和时间无误后，才在 `.env` 中改为：
 
 ```dotenv
 POVO_ENABLE_REDEMPTION=1
 ```
 
-随后执行：
+## 安全边界
 
-```bash
-docker compose up -d
-```
+- 不要在 Issue、Pull Request、工作流普通输入、日志或截图中提交认证信息。
+- 不要把 `.env`、`data/`、XML、兑换码或解密后的状态加入 Git。
+- Dashboard 只应绑定回环地址或可信内网；公网访问必须加认证 HTTPS 反向代理。
+- 一次提交结果无法确认时，不要连续重跑。
+- 详细要求见 [SECURITY.md](SECURITY.md)。
 
-失败后不要反复手动重试。先检查 `state.json`、Dashboard 和脱敏历史记录。
+## 已知限制
 
-## 管理
-
-```bash
-docker compose ps
-docker compose logs --tail=100 povo-worker
-docker compose logs --tail=100 povo-web
-docker compose restart povo-worker
-docker compose down
-```
-
-升级或修改前，先备份整个 `data/`。不要把 `data/`、`.env`、XML、兑换码或日志加入 Git。
-
-## 公开 Fork / GitHub Actions
-
-可以采用类似签到项目的方式，把解密钥匙放在 GitHub Repository Secrets，把加密后的会话状态放在公开仓库。完整设置、Secret 清单、轮换和故障恢复见 [GitHub Actions 模式](docs/GITHUB_ACTIONS.md)。
-
-推荐使用 **Start povo email login** 与 **Finish povo email login** 两个工作流。邮箱、验证码和 promo code 必须通过 Repository Secrets 提供，不能放在普通工作流输入中；成功后只在仓库保留认证加密的 `state/session.enc`。已有 Android 会话文件仍可作为备用导入方式。
+- 接口未公开，App 更新后可能失效；
+- 账户同时存在多个 add-on 时可能返回 `MULTIPLE_ADDONS_FOUND`，目前尚未解决；
+- GitHub 定时任务可能排队或延迟；
+- GitHub 两阶段工作流仍需要用户在 15 分钟内手动提供邮件验证码；
+- 本项目不能视为生产级或运营商官方工具。
 
 ## 测试
 
@@ -86,6 +89,6 @@ docker compose config
 docker compose build
 ```
 
-## 免责声明
+## 开源协议与免责声明
 
-本项目仅用于研究和个人账户自动化。接口、字段和业务规则随时可能改变；错误使用可能导致会话失效、重复提交或账户限制。使用者承担全部风险。
+本项目采用 [MIT License](LICENSE)。接口、字段和业务规则可能变化；错误使用可能造成会话失效、重复提交或账户限制。项目作者不提供任何明示或暗示担保，使用者自行承担风险。
